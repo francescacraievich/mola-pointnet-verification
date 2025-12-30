@@ -1,227 +1,191 @@
-# Multi-Objective Adversarial Perturbations for SLAM Systems using NSGA-III
+# MLP-LiDAR Formal Verification with αβ-CROWN
 
-[![CI](https://github.com/francescacraievich/mola-adversarial-nsga3/actions/workflows/ci.yml/badge.svg)](https://github.com/francescacraievich/mola-adversarial-nsga3/actions/workflows/ci.yml)
-[![Documentation](https://github.com/francescacraievich/mola-adversarial-nsga3/actions/workflows/docs.yml/badge.svg)](https://github.com/francescacraievich/mola-adversarial-nsga3/actions/workflows/docs.yml)
-[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://francescacraievich.github.io/mola-adversarial-nsga3/)
-[![codecov](https://codecov.io/github/francescacraievich/mola-adversarial-nsga3/graph/badge.svg?token=BQX8LWJMSJ)](https://codecov.io/github/francescacraievich/mola-adversarial-nsga3)
-
-Documentation available at: [documentation](https://francescacraievich.github.io/mola-adversarial-nsga3/)
-
-Evolutionary multi-objective optimization of adversarial perturbations on LiDAR point clouds to evaluate the robustness of SLAM systems.
+Formal verification of an MLP classifier for LiDAR point clouds using αβ-CROWN, with comparison to adversarial attacks from NSGA-III optimization.
 
 ## Overview
 
-This project uses **NSGA-III** (Non-dominated Sorting Genetic Algorithm III) to generate adversarial perturbations on LiDAR point clouds that compromise SLAM systems. The algorithm optimizes a trade-off between:
+This project verifies the robustness of a neural network classifier for LiDAR point clouds. The goal is to demonstrate that formal verification can predict real-world system failures by comparing:
 
-- **Attack Effectiveness**: Maximize localization error (ATE - Absolute Trajectory Error)
-- **Imperceptibility**: Minimize the magnitude of perturbations
+1. **Formal Verification**: Using αβ-CROWN to prove robustness properties
+2. **Empirical Attacks**: NSGA-III adversarial perturbations on MOLA SLAM (from [mola-adversarial-nsga3](https://github.com/francescacraievich/mola-adversarial-nsga3))
 
-### Key Findings
+### Key Hypothesis
 
-NSGA-III optimization (750 evaluations) reveals a Pareto front with multiple attack strategies:
-- **Baseline ATE**: 23cm (unperturbed SLAM accuracy)
-- **Best attack**: 85cm drift with 4.6cm perturbation (**+269% degradation**)
-- **Balanced sweet spot**: 65cm drift with 3.5cm perturbation (+183% degradation)
-- **Stealthy attack**: 32cm drift with 1.5cm perturbation (+39% degradation)
+If the critical ε value (where verification rate drops below 50%) correlates with the perturbation magnitude that causes SLAM failure (~1.5-2cm), we demonstrate that formal verification predicts real-world system vulnerabilities.
 
-Perturbations remain below sensor noise levels while causing significant SLAM degradation.
+## Properties Verified
 
-### System Integration
+### Property 1: Local Robustness (L∞)
+For every correctly classified point x₀:
+```
+∀x' with ||x' - x₀||_∞ ≤ ε : f(x') = f(x₀)
+```
+"Classification remains invariant under perturbation"
 
-The system integrates **MOLA SLAM** with **NVIDIA Isaac Sim** using ROS2, enabling:
-- Real-time perturbation injection into LiDAR point clouds
-- Automated fitness evaluation by comparing perturbed vs baseline trajectories
-- Pareto front exploration for optimal attack/imperceptibility trade-offs
+### Property 2: Safety Property
+For every point x₀ classified as OBSTACLE:
+```
+∀x' with ||x' - x₀||_∞ ≤ ε : f(x') ≠ GROUND
+```
+"An obstacle is never misclassified as drivable ground"
 
-## Features
+Both properties are tested for ε ∈ {0.01, 0.02, 0.03, 0.05, 0.10} meters.
 
-- Multi-objective optimization using NSGA-III with reference points
-- Real-time LiDAR perturbation via ROS2 nodes
-- Automated trajectory comparison and ATE computation
-- Comprehensive test suite 
-- Visualization tools for trajectory comparison and Pareto fronts
-- Comparison with baseline approaches (random perturbations, grid search)
+## NSGA-III Results (Baseline)
+
+From the adversarial attack project:
+| Perturbation | ATE (SLAM Error) | Status |
+|--------------|------------------|--------|
+| 0 cm | 23 cm | Baseline |
+| 1.5 cm | 32 cm | SLAM degrades |
+| 3.5 cm | 65 cm | Significant degradation |
+| 4.6 cm | 85 cm | SLAM fails |
+
+**Critical threshold**: ~1.5-2cm perturbation causes unacceptable SLAM degradation.
 
 ## Installation
 
-### Prerequisites
-
-- Python 3.10+
-- ROS2 Jazzy 
-- NVIDIA Isaac Sim 5.0
-- MOLA SLAM binaries
-
-### Setup
-
 ```bash
-# Clone repository
-git clone https://github.com/francescacraievich/mola-adversarial-nsga3.git
-cd mola-adversarial-nsga3
+# Clone the repository
+git clone https://github.com/francescacraievich/mola-mlp-verification.git
+cd mola-mlp-verification
 
-# Install Python dependencies
+# Create virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 
+# For verification, install αβ-CROWN separately:
+# https://github.com/Verified-Intelligence/alpha-beta-CROWN
 ```
 
-## Understanding the Optimization
+## Usage
 
-### Fitness Functions
+### 1. Data Preparation
 
-The NSGA-III algorithm optimizes two competing objectives:
+Process raw LiDAR point clouds and generate heuristic labels:
 
-1. **f1 = -ATE (Absolute Trajectory Error)**
-   - Measures localization accuracy degradation
-   - Computed as RMSE between MOLA trajectory and ground truth
-   - Negated because we want to maximize error (minimize fitness)
-   - Formula: `ATE = sqrt(mean((x_est - x_gt)^2 + (y_est - y_gt)^2 + (z_est - z_gt)^2))`
+```bash
+python src/data_preparation.py
+```
 
-2. **f2 = perturbation_magnitude**
-   - Measures imperceptibility of the attack
-   - Computed using Chamfer distance between original and perturbed clouds
-   - Want to minimize this to keep perturbations stealthy
-   - Formula: `Chamfer = mean(min_distance(perturbed → original)) + mean(min_distance(original → perturbed))`
+This will:
+- Load 113 frames from `data/raw/frame_sequence.npy`
+- Apply geometric heuristics to label points (GROUND/OBSTACLE/OTHER)
+- Subsample to ~6000 points per frame (balanced classes)
+- Normalize data and split 80/20 train/test
+- Save to `data/processed/`
 
-### NSGA-III vs NSGA-II
+### 2. Model Training
 
-This project uses **NSGA-III** (not NSGA-II) because:
+```bash
+python src/train.py
+```
 
-| Feature | NSGA-II | NSGA-III |
-|---------|---------|----------|
-| Objectives | 2-3 | Many (3+) |
-| Selection | Crowding distance | Reference points |
-| Diversity | Spread along front | Structured exploration |
-| Our use case | Could work | Better for future extension to 3+ objectives |
+Trains the MLP classifier (~100K parameters) to achieve >80% accuracy.
 
-We currently optimize 2 objectives (ATE, imperceptibility), but NSGA-III allows future expansion to optimize additional objectives like:
-- Computational cost
-- Physical realizability
-- Detection probability
+### 3. Export to ONNX
 
-### Perturbation Types
+```bash
+python src/export_onnx.py
+```
 
-The genome encodes **17 parameters** combining multiple attack strategies:
+Exports the trained model to ONNX format for αβ-CROWN.
 
-**Basic perturbations (7 params):**
-1-3. **Directional bias** (3D vector for systematic drift)
-4. **Noise intensity** (Gaussian noise scale [0, 5cm])
-5. **Curvature targeting** (weight high-curvature regions)
-6. **Dropout rate** (point removal [0, 3%])
-7. **Ghost ratio** (fake points [0, 2%])
+### 4. Verification
 
-**Cluster attack (4 params):**
-8-10. **Cluster direction** (3D vector for localized errors)
-11. **Cluster strength** (magnitude of cluster displacement)
+```bash
+python src/verify.py
+```
 
-**Advanced attacks (6 params):**
-12. **Spatial correlation** (coherent noise patterns)
-13. **Geometric distortion** (range/angle/scale distortion - **KEY for ICP**)
-14. **Edge attack** (target critical features - **SLACK-inspired**)
-15. **Temporal drift** (accumulating bias - **breaks loop closure**)
-16. **Scanline perturbation** (along-beam shifts - **ASP-inspired**)
-17. **Strategic ghost** (place ghosts near features - **SLACK-inspired**)
+Runs formal verification with αβ-CROWN for all ε values.
 
+### 5. Analysis
 
+```bash
+python src/analyze_results.py
+```
+
+Generates comparison plots and identifies critical ε values.
 
 ## Project Structure
 
 ```
-mola-adversarial-nsga3/
-├── src/
-│   ├── optimization/
-│   │   └── run_nsga3.py              # NSGA-III optimizer with MOLAEvaluator
-│   ├── perturbations/
-│   │   └── perturbation_generator.py # LiDAR perturbation generation
-│   ├── evaluation/
-│   │   └── metrics.py                # ATE and Chamfer distance computation
-│   ├── utils/
-│   │   └── data_loaders.py           # Load point clouds, trajectories, timestamps
-│   ├── baseline/
-│   │   └── baseline_ate.py           # Baseline ATE measurement
-│   ├── preprocessing_data/
-│   │   ├── extract_frames_and_tf_from_bag.py  # Extract data from ROS bags
-│   │   └── create_frame_sequence.py  # Create frame sequences
-│   ├── plots/
-│   │   ├── compare_trajectories.py   # Trajectory visualization
-│   │   ├── plot_nsga3_results.py     # Pareto front visualization
-│   │   └── plot_parameter_dual_correlation.py  # Parameter analysis
-│   ├── rover_isaacsim/
-│   │   └── carter_mola_slam/
-│   │       └── scripts/
-│   │           ├── add_intensity_node.py      # ROS2 node: add intensity
-│   │           ├── perturbation_node.py       # ROS2 node: perturbation
-│   │           └── pointcloud_comparison_node.py  # Compare point clouds
-│   ├── results/                      # Optimization outputs and plots
-│   └── tests/
-│       ├── test_mola_evaluator.py    # MOLAEvaluator tests
-│       ├── test_perturbation_generator.py
-│       ├── test_data_loaders.py
-│       ├── test_metrics.py
-│       └── test_nsga3_optimization.py
+mola-mlp-verification/
 ├── data/
-│   ├── maps/                         # Ground truth trajectories
-│   └── trajectory_recordings/        # Saved trajectories (baseline, perturbed)
-├── bags/                             # ROS bag recordings (not tracked)
-└── docs/                             # MkDocs documentation
+│   ├── raw/                    # Original point clouds
+│   │   └── frame_sequence.npy
+│   └── processed/              # Processed dataset
+│       ├── train_points.npy
+│       ├── train_labels.npy
+│       ├── test_points.npy
+│       ├── test_labels.npy
+│       └── normalization_params.npy
+├── src/
+│   ├── data_preparation.py     # Data loading + heuristic labeling
+│   ├── model.py                # MLP architecture definition
+│   ├── train.py                # Training script
+│   ├── export_onnx.py          # ONNX export
+│   ├── verify.py               # αβ-CROWN verification
+│   └── analyze_results.py      # Results analysis and plots
+├── configs/
+│   ├── train_config.yaml       # Training hyperparameters
+│   └── verification_config.yaml # αβ-CROWN configuration
+├── models/
+│   ├── mlp_lidar.pth           # PyTorch weights
+│   └── mlp_lidar.onnx          # ONNX model
+├── results/
+│   ├── training_log.json       # Training metrics
+│   ├── verification_results.json
+│   └── figures/
+│       ├── verified_vs_epsilon.png
+│       ├── comparison_nsga3.png
+│       └── certified_accuracy.png
+├── notebooks/                  # Optional exploration
+├── requirements.txt
+└── README.md
 ```
 
-## Testing
+## Network Architecture
 
-The project includes a comprehensive test suite with 31 tests covering critical components:
+MLP designed for efficient verification (~100K parameters):
 
-### Test Coverage
-
-- **Voxel downsampling** (7 tests): Pure numpy logic, performance-critical
-- **Trajectory collection** (4 tests): State management and odometry processing
-- **MOLA lifecycle** (8 tests): Subprocess management and signal handling
-- **Edge cases** (8 tests): Empty arrays, malformed messages, process crashes
-- **Fixtures** (4): Reusable mock objects for ROS2 components
-
-### Running Tests
-
-```bash
-# Run all tests
-pytest src/tests/
-
-# Run with coverage report
-pytest src/tests/ --cov=src --cov-report=html
-
-# Run only MOLAEvaluator tests
-pytest src/tests/test_mola_evaluator.py -v
+```
+Input (3) → Linear(128) → ReLU → Linear(256) → ReLU → Linear(128) → ReLU → Linear(3)
 ```
 
-## Results
+- **Input**: 3 features (x, y, z coordinates)
+- **Output**: 3 classes (GROUND, OBSTACLE, OTHER)
+- **No BatchNorm/Dropout**: Simplified for verification
 
-### Optimization Results (Genome 12 - 750 evaluations)
+## Labeling Heuristics
 
-NSGA-III evolved **32 Pareto-optimal solutions** from 750 evaluations (347 valid):
+Based on the Isaac Sim environment geometry:
 
-| Strategy | ATE (cm) | Perturbation (cm) | Effectiveness | Use Case |
-|----------|----------|-------------------|---------------|----------|
-| **Aggressive** | **85** | **4.6** | **+269%** | **Maximum degradation** ✓ |
-| Balanced | 65 | 3.5 | +183% | Good trade-off |
-| Moderate | 44 | 2.0 | +91% | Lower imperceptibility |
-| Stealthy | 27 | 1.0 | +17% | Minimal perturbation |
-| *Baseline* | *23* | *0* | *0%* | *No attack* |
+| Class | Rule | Description |
+|-------|------|-------------|
+| GROUND (0) | z < -0.3m | Below robot level |
+| OBSTACLE (1) | 0.2m < z < 2.5m AND dist_xy < 15m | Walls, objects |
+| OTHER (2) | Everything else | Sky, far points, noise |
 
-**Key findings:**
-- **Baseline ATE**: 23cm (unperturbed MOLA SLAM)
-- **Best attack**: 85cm with 4.6cm perturbation (+269% degradation)
-- **Most effective parameters**: Temporal drift, Scanline perturbation
-- **32 Pareto-optimal solutions** spanning the trade-off space
+## Expected Results
 
-### Experimental Workflow
+1. **Training**: >80% accuracy on test set
+2. **Verification**: Decreasing verified % as ε increases
+3. **Critical ε**: Value where verified rate drops below 50%
+4. **Correlation**: Critical ε should be near 1.5-2cm (NSGA-III threshold)
 
-The complete experimental pipeline consists of:
+## Related Work
 
-1. **Offline optimization**: NSGA-III evolves perturbation genomes (10-50 generations)
-2. **Real-time testing**: Best genomes tested in Isaac Sim with ROS2 integration
-3. **Trajectory comparison**: ATE computed between baseline and perturbed runs
-4. **Visualization**: Pareto fronts and trajectory plots for analysis
+- [mola-adversarial-nsga3](https://github.com/francescacraievich/mola-adversarial-nsga3): NSGA-III adversarial attacks on MOLA SLAM
+- [αβ-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN): Neural network verifier
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License
 
 ## Author
 
-Francesca Craievich
+Francesca Craievich - Safe and Verified AI Course Project

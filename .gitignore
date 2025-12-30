@@ -1,8 +1,15 @@
+# Virtual environment
+venv/
+.venv/
+
 # Data files (too large for GitHub)
-data/frame_sequence.npy
-data/*.npy
-bags/
-*.mcap
+data/raw/
+data/processed/
+*.npy
+
+# Model weights (can be regenerated)
+models/*.pth
+models/*.onnx
 
 # Python
 __pycache__/
@@ -12,9 +19,6 @@ __pycache__/
 htmlcov/
 *.egg-info/
 
-# Node
-node_modules/
-
 # IDE
 .vscode/
 .idea/
@@ -22,3 +26,6 @@ node_modules/
 # Build
 build/
 dist/
+
+# Jupyter
+.ipynb_checkpoints/
