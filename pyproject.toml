@@ -1,59 +1,56 @@
+[project]
+name = "mola-mlp-verification"
+version = "0.1.0"
+description = "Formal verification of MLP classifier for LiDAR point clouds using αβ-CROWN"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Francesca Craievich"}
+]
+
 [tool.black]
 line-length = 100
-target-version = ['py39', 'py310', 'py311', 'py312']
+target-version = ['py310', 'py311', 'py312']
 include = '\.pyi?$'
-extend-exclude = '''
+exclude = '''
 /(
     \.git
-  | \.pytest_cache
-  | __pycache__
-  | src/cyclonedds
-  | src/rover_isaacsim
+    | \.venv
+    | venv
+    | build
+    | dist
 )/
 '''
 
 [tool.isort]
 profile = "black"
 line_length = 100
-skip_glob = [
-    "src/cyclonedds/*",
-    "src/rover_isaacsim/*"
-]
+skip = [".git", "venv", ".venv"]
+
+[tool.flake8]
+max-line-length = 100
+extend-ignore = ["E203", "W503"]
+exclude = [".git", "venv", ".venv", "__pycache__"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = false
 ignore_missing_imports = true
-exclude = [
-    'src/cyclonedds',
-    'src/rover_isaacsim'
-]
 
 [tool.pytest.ini_options]
-minversion = "6.0"
-addopts = "-ra -q --strict-markers"
-testpaths = ["tests"]
+testpaths = ["src/tests"]
 python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
+addopts = "-v --tb=short"
 
 [tool.coverage.run]
 source = ["src"]
-omit = [
-    "*/tests/*",
-    "*/test_*.py",
-    "src/cyclonedds/*",
-    "src/rover_isaacsim/*"
-]
+omit = ["src/tests/*", "*/__pycache__/*"]
 
 [tool.coverage.report]
 exclude_lines = [
     "pragma: no cover",
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
     "if __name__ == .__main__.:",
-    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
 ]

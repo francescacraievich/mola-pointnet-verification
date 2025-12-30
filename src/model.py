@@ -21,10 +21,10 @@ Properties to verify:
     2. Safety: ∀x' : ||x' - x₀||_∞ ≤ ε ∧ f(x₀)=OBSTACLE → f(x') ≠ GROUND
 """
 
-import torch
-import torch.nn as nn
 from typing import Tuple
 
+import torch
+import torch.nn as nn
 
 # Class indices
 CLASS_GROUND = 0
@@ -32,11 +32,7 @@ CLASS_OBSTACLE = 1
 CLASS_OTHER = 2
 
 # Class names for display
-CLASS_NAMES = {
-    CLASS_GROUND: "GROUND",
-    CLASS_OBSTACLE: "OBSTACLE",
-    CLASS_OTHER: "OTHER"
-}
+CLASS_NAMES = {CLASS_GROUND: "GROUND", CLASS_OBSTACLE: "OBSTACLE", CLASS_OTHER: "OTHER"}
 
 
 class MLPClassifier(nn.Module):
@@ -57,7 +53,7 @@ class MLPClassifier(nn.Module):
         self,
         input_dim: int = 3,
         hidden_dims: Tuple[int, ...] = (256, 256, 128),
-        num_classes: int = 3
+        num_classes: int = 3,
     ):
         """
         Initialize MLP classifier.
@@ -94,7 +90,7 @@ class MLPClassifier(nn.Module):
         """Initialize weights using Kaiming initialization for ReLU."""
         for module in self.modules():
             if isinstance(module, nn.Linear):
-                nn.init.kaiming_normal_(module.weight, nonlinearity='relu')
+                nn.init.kaiming_normal_(module.weight, nonlinearity="relu")
                 if module.bias is not None:
                     nn.init.zeros_(module.bias)
 
@@ -163,9 +159,7 @@ class MLPClassifier(nn.Module):
 
 
 def create_model(
-    input_dim: int = 3,
-    hidden_dims: Tuple[int, ...] = (256, 256, 128),
-    num_classes: int = 3
+    input_dim: int = 3, hidden_dims: Tuple[int, ...] = (256, 256, 128), num_classes: int = 3
 ) -> MLPClassifier:
     """
     Factory function to create the MLP model.
@@ -178,14 +172,10 @@ def create_model(
     Returns:
         MLPClassifier instance
     """
-    return MLPClassifier(
-        input_dim=input_dim,
-        hidden_dims=hidden_dims,
-        num_classes=num_classes
-    )
+    return MLPClassifier(input_dim=input_dim, hidden_dims=hidden_dims, num_classes=num_classes)
 
 
-def load_model(path: str, device: str = 'cpu') -> MLPClassifier:
+def load_model(path: str, device: str = "cpu") -> MLPClassifier:
     """
     Load a trained model from checkpoint.
 
@@ -199,12 +189,12 @@ def load_model(path: str, device: str = 'cpu') -> MLPClassifier:
     checkpoint = torch.load(path, map_location=device)
 
     # Handle both full checkpoint and state_dict only
-    if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
-        state_dict = checkpoint['model_state_dict']
+    if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
+        state_dict = checkpoint["model_state_dict"]
         # Try to get architecture params if saved
-        input_dim = checkpoint.get('input_dim', 3)
-        hidden_dims = checkpoint.get('hidden_dims', (256, 256, 128))
-        num_classes = checkpoint.get('num_classes', 3)
+        input_dim = checkpoint.get("input_dim", 3)
+        hidden_dims = checkpoint.get("hidden_dims", (256, 256, 128))
+        num_classes = checkpoint.get("num_classes", 3)
     else:
         state_dict = checkpoint
         input_dim = 3
@@ -251,6 +241,8 @@ if __name__ == "__main__":
     print("\nVerification-friendly checks:")
     print(f"  - No BatchNorm: {not any(isinstance(m, nn.BatchNorm1d) for m in model.modules())}")
     print(f"  - No Dropout: {not any(isinstance(m, nn.Dropout) for m in model.modules())}")
-    print(f"  - Only ReLU activations: {all(isinstance(m, (nn.Linear, nn.ReLU, nn.Sequential)) for m in model.modules())}")
+    print(
+        f"  - Only ReLU activations: {all(isinstance(m, (nn.Linear, nn.ReLU, nn.Sequential)) for m in model.modules())}"
+    )
 
     print("\nModel test passed!")

@@ -15,11 +15,11 @@ Classes:
     2 - OTHER: everything else (sky, far points, noise)
 """
 
-import numpy as np
-from pathlib import Path
-from typing import Tuple, Dict
 import argparse
+from pathlib import Path
+from typing import Dict, Tuple
 
+import numpy as np
 
 # Label definitions
 LABEL_GROUND = 0
@@ -69,21 +69,14 @@ def apply_heuristic_labels(points: np.ndarray) -> np.ndarray:
 
     # OBSTACLE: 0.2m < z < 2.5m AND distance_xy < 15m
     dist_xy = np.sqrt(x**2 + y**2)
-    obstacle_mask = (
-        (z > OBSTACLE_Z_MIN) &
-        (z < OBSTACLE_Z_MAX) &
-        (dist_xy < OBSTACLE_XY_MAX_DIST)
-    )
+    obstacle_mask = (z > OBSTACLE_Z_MIN) & (z < OBSTACLE_Z_MAX) & (dist_xy < OBSTACLE_XY_MAX_DIST)
     labels[obstacle_mask] = LABEL_OBSTACLE
 
     return labels
 
 
 def subsample_points(
-    points: np.ndarray,
-    labels: np.ndarray,
-    n_samples: int,
-    balanced: bool = True
+    points: np.ndarray, labels: np.ndarray, n_samples: int, balanced: bool = True
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Subsample points from a frame.
@@ -121,9 +114,7 @@ def subsample_points(
 
 
 def process_all_frames(
-    raw_data: np.ndarray,
-    samples_per_frame: int = 6000,
-    balanced: bool = True
+    raw_data: np.ndarray, samples_per_frame: int = 6000, balanced: bool = True
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Process all frames: label and subsample.
@@ -146,10 +137,7 @@ def process_all_frames(
 
         # Subsample
         points_sub, labels_sub = subsample_points(
-            frame[:, :3],  # Only x, y, z (no intensity)
-            labels,
-            samples_per_frame,
-            balanced
+            frame[:, :3], labels, samples_per_frame, balanced  # Only x, y, z (no intensity)
         )
 
         all_points.append(points_sub)
@@ -180,13 +168,10 @@ def compute_normalization_params(points: np.ndarray) -> Dict[str, np.ndarray]:
     std = points.std(axis=0)
     # Avoid division by zero
     std[std < 1e-6] = 1.0
-    return {'mean': mean, 'std': std}
+    return {"mean": mean, "std": std}
 
 
-def normalize_points(
-    points: np.ndarray,
-    params: Dict[str, np.ndarray]
-) -> np.ndarray:
+def normalize_points(points: np.ndarray, params: Dict[str, np.ndarray]) -> np.ndarray:
     """
     Normalize points using precomputed parameters.
 
@@ -197,14 +182,11 @@ def normalize_points(
     Returns:
         Normalized points
     """
-    return (points - params['mean']) / params['std']
+    return (points - params["mean"]) / params["std"]
 
 
 def split_data(
-    points: np.ndarray,
-    labels: np.ndarray,
-    test_ratio: float = 0.2,
-    random_seed: int = 42
+    points: np.ndarray, labels: np.ndarray, test_ratio: float = 0.2, random_seed: int = 42
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Split data into train and test sets.
@@ -230,18 +212,15 @@ def split_data(
         points[train_indices],
         labels[train_indices],
         points[test_indices],
-        labels[test_indices]
+        labels[test_indices],
     )
 
 
-def print_dataset_stats(
-    train_labels: np.ndarray,
-    test_labels: np.ndarray
-) -> None:
+def print_dataset_stats(train_labels: np.ndarray, test_labels: np.ndarray) -> None:
     """Print statistics about the dataset."""
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("DATASET STATISTICS")
-    print("="*50)
+    print("=" * 50)
 
     label_names = {0: "GROUND", 1: "OBSTACLE", 2: "OTHER"}
 
@@ -257,7 +236,7 @@ def print_dataset_stats(
         pct = 100 * count / len(test_labels)
         print(f"  {name}: {count} ({pct:.1f}%)")
 
-    print("="*50 + "\n")
+    print("=" * 50 + "\n")
 
 
 def save_processed_data(
@@ -266,7 +245,7 @@ def save_processed_data(
     train_labels: np.ndarray,
     test_points: np.ndarray,
     test_labels: np.ndarray,
-    norm_params: Dict[str, np.ndarray]
+    norm_params: Dict[str, np.ndarray],
 ) -> None:
     """
     Save processed data to files.
@@ -294,43 +273,25 @@ def save_processed_data(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Prepare LiDAR point cloud data for MLP training"
-    )
+    parser = argparse.ArgumentParser(description="Prepare LiDAR point cloud data for MLP training")
     parser.add_argument(
         "--input",
         type=str,
         default="data/raw/frame_sequence.npy",
-        help="Path to raw frame_sequence.npy"
+        help="Path to raw frame_sequence.npy",
     )
     parser.add_argument(
-        "--output",
-        type=str,
-        default="data/processed",
-        help="Output directory for processed data"
+        "--output", type=str, default="data/processed", help="Output directory for processed data"
     )
     parser.add_argument(
-        "--samples-per-frame",
-        type=int,
-        default=6000,
-        help="Number of points to sample per frame"
+        "--samples-per-frame", type=int, default=6000, help="Number of points to sample per frame"
     )
     parser.add_argument(
-        "--test-ratio",
-        type=float,
-        default=0.2,
-        help="Fraction of data for testing"
+        "--test-ratio", type=float, default=0.2, help="Fraction of data for testing"
     )
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
     parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="Random seed for reproducibility"
-    )
-    parser.add_argument(
-        "--no-balance",
-        action="store_true",
-        help="Disable class balancing during sampling"
+        "--no-balance", action="store_true", help="Disable class balancing during sampling"
     )
 
     args = parser.parse_args()
@@ -347,9 +308,7 @@ def main():
 
     # Process all frames
     points, labels = process_all_frames(
-        raw_data,
-        samples_per_frame=args.samples_per_frame,
-        balanced=not args.no_balance
+        raw_data, samples_per_frame=args.samples_per_frame, balanced=not args.no_balance
     )
 
     # Compute normalization parameters on ALL data before split
@@ -361,10 +320,7 @@ def main():
 
     # Split
     train_points, train_labels, test_points, test_labels = split_data(
-        points_normalized,
-        labels,
-        test_ratio=args.test_ratio,
-        random_seed=args.seed
+        points_normalized, labels, test_ratio=args.test_ratio, random_seed=args.seed
     )
 
     # Print stats
@@ -372,12 +328,7 @@ def main():
 
     # Save
     save_processed_data(
-        output_dir,
-        train_points,
-        train_labels,
-        test_points,
-        test_labels,
-        norm_params
+        output_dir, train_points, train_labels, test_points, test_labels, norm_params
     )
 
     print("Data preparation complete!")

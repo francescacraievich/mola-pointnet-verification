@@ -8,18 +8,19 @@ Trains the MLP model on processed LiDAR point cloud data.
 - Saves training metrics and best model checkpoint
 """
 
+import argparse
+import json
+from pathlib import Path
+from typing import Dict, List, Tuple
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
-import numpy as np
-from pathlib import Path
-import json
-import argparse
 from tqdm import tqdm
-from typing import Dict, Tuple, List
 
-from model import create_model, CLASS_NAMES
+from model import CLASS_NAMES, create_model
 
 
 def load_processed_data(data_dir: Path) -> Tuple[np.ndarray, ...]:
@@ -40,32 +41,22 @@ def create_dataloaders(
     train_labels: np.ndarray,
     test_points: np.ndarray,
     test_labels: np.ndarray,
-    batch_size: int = 256
+    batch_size: int = 256,
 ) -> Tuple[DataLoader, DataLoader]:
     """Create PyTorch DataLoaders from numpy arrays."""
     # Convert to tensors
     train_dataset = TensorDataset(
-        torch.from_numpy(train_points).float(),
-        torch.from_numpy(train_labels).long()
+        torch.from_numpy(train_points).float(), torch.from_numpy(train_labels).long()
     )
     test_dataset = TensorDataset(
-        torch.from_numpy(test_points).float(),
-        torch.from_numpy(test_labels).long()
+        torch.from_numpy(test_points).float(), torch.from_numpy(test_labels).long()
     )
 
     train_loader = DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=4,
-        pin_memory=True
+        train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True
     )
     test_loader = DataLoader(
-        test_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=4,
-        pin_memory=True
+        test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True
     )
 
     return train_loader, test_loader
@@ -76,7 +67,7 @@ def train_epoch(
     train_loader: DataLoader,
     criterion: nn.Module,
     optimizer: optim.Optimizer,
-    device: torch.device
+    device: torch.device,
 ) -> Tuple[float, float]:
     """Train for one epoch."""
     model.train()
@@ -106,10 +97,7 @@ def train_epoch(
 
 @torch.no_grad()
 def evaluate(
-    model: nn.Module,
-    test_loader: DataLoader,
-    criterion: nn.Module,
-    device: torch.device
+    model: nn.Module, test_loader: DataLoader, criterion: nn.Module, device: torch.device
 ) -> Tuple[float, float, Dict[int, Dict[str, float]]]:
     """Evaluate model on test set."""
     model.eval()
@@ -148,7 +136,7 @@ def evaluate(
             per_class[cls] = {
                 "accuracy": 100.0 * class_correct[cls] / class_total[cls],
                 "correct": class_correct[cls],
-                "total": class_total[cls]
+                "total": class_total[cls],
             }
 
     return avg_loss, accuracy, per_class
@@ -162,15 +150,13 @@ def train(
     epochs: int = 50,
     lr: float = 0.001,
     save_dir: Path = Path("models"),
-    results_dir: Path = Path("results")
+    results_dir: Path = Path("results"),
 ) -> Dict:
     """Full training loop."""
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='max', factor=0.5, patience=5
-    )
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max", factor=0.5, patience=5)
 
     # Training history
     history = {
@@ -180,7 +166,7 @@ def train(
         "test_acc": [],
         "per_class_acc": [],
         "best_epoch": 0,
-        "best_acc": 0.0
+        "best_acc": 0.0,
     }
 
     best_acc = 0.0
@@ -193,14 +179,10 @@ def train(
 
     for epoch in range(1, epochs + 1):
         # Train
-        train_loss, train_acc = train_epoch(
-            model, train_loader, criterion, optimizer, device
-        )
+        train_loss, train_acc = train_epoch(model, train_loader, criterion, optimizer, device)
 
         # Evaluate
-        test_loss, test_acc, per_class = evaluate(
-            model, test_loader, criterion, device
-        )
+        test_loss, test_acc, per_class = evaluate(model, test_loader, criterion, device)
 
         # Update scheduler
         scheduler.step(test_acc)
@@ -210,14 +192,16 @@ def train(
         history["train_acc"].append(train_acc)
         history["test_loss"].append(test_loss)
         history["test_acc"].append(test_acc)
-        history["per_class_acc"].append({
-            CLASS_NAMES[k]: v["accuracy"] for k, v in per_class.items()
-        })
+        history["per_class_acc"].append(
+            {CLASS_NAMES[k]: v["accuracy"] for k, v in per_class.items()}
+        )
 
         # Print progress
-        print(f"Epoch {epoch:3d}/{epochs} | "
-              f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}% | "
-              f"Test Loss: {test_loss:.4f} | Test Acc: {test_acc:.2f}%")
+        print(
+            f"Epoch {epoch:3d}/{epochs} | "
+            f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}% | "
+            f"Test Loss: {test_loss:.4f} | Test Acc: {test_acc:.2f}%"
+        )
 
         # Print per-class accuracy every 10 epochs
         if epoch % 10 == 0 or epoch == 1:
@@ -239,7 +223,7 @@ def train(
                 "test_loss": test_loss,
                 "input_dim": model.input_dim,
                 "hidden_dims": model.hidden_dims,
-                "num_classes": model.num_classes
+                "num_classes": model.num_classes,
             }
             torch.save(checkpoint, save_dir / "mlp_lidar.pth")
             print(f"  -> New best model saved! (Acc: {best_acc:.2f}%)")
@@ -250,7 +234,7 @@ def train(
 
     # Save training log
     log_path = results_dir / "training_log.json"
-    with open(log_path, 'w') as f:
+    with open(log_path, "w") as f:
         json.dump(history, f, indent=2)
     print(f"Training log saved to {log_path}")
 
@@ -259,22 +243,20 @@ def train(
 
 def main():
     parser = argparse.ArgumentParser(description="Train MLP LiDAR classifier")
-    parser.add_argument("--data-dir", type=str, default="data/processed",
-                        help="Directory with processed data")
-    parser.add_argument("--save-dir", type=str, default="models",
-                        help="Directory to save model checkpoints")
-    parser.add_argument("--results-dir", type=str, default="results",
-                        help="Directory to save training logs")
-    parser.add_argument("--epochs", type=int, default=50,
-                        help="Number of training epochs")
-    parser.add_argument("--batch-size", type=int, default=256,
-                        help="Batch size for training")
-    parser.add_argument("--lr", type=float, default=0.001,
-                        help="Learning rate")
-    parser.add_argument("--seed", type=int, default=42,
-                        help="Random seed")
-    parser.add_argument("--cpu", action="store_true",
-                        help="Force CPU training")
+    parser.add_argument(
+        "--data-dir", type=str, default="data/processed", help="Directory with processed data"
+    )
+    parser.add_argument(
+        "--save-dir", type=str, default="models", help="Directory to save model checkpoints"
+    )
+    parser.add_argument(
+        "--results-dir", type=str, default="results", help="Directory to save training logs"
+    )
+    parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs")
+    parser.add_argument("--batch-size", type=int, default=256, help="Batch size for training")
+    parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--cpu", action="store_true", help="Force CPU training")
 
     args = parser.parse_args()
 
@@ -294,8 +276,7 @@ def main():
 
     # Create dataloaders
     train_loader, test_loader = create_dataloaders(
-        train_points, train_labels, test_points, test_labels,
-        batch_size=args.batch_size
+        train_points, train_labels, test_points, test_labels, batch_size=args.batch_size
     )
 
     # Create model
@@ -312,7 +293,7 @@ def main():
         epochs=args.epochs,
         lr=args.lr,
         save_dir=Path(args.save_dir),
-        results_dir=Path(args.results_dir)
+        results_dir=Path(args.results_dir),
     )
 
     # Final evaluation
@@ -331,16 +312,20 @@ def main():
     print(f"Test Loss: {test_loss:.4f}")
     print("\nPer-class accuracy:")
     for cls, metrics in per_class.items():
-        print(f"  {CLASS_NAMES[cls]}: {metrics['accuracy']:.2f}% "
-              f"({metrics['correct']}/{metrics['total']})")
+        print(
+            f"  {CLASS_NAMES[cls]}: {metrics['accuracy']:.2f}% "
+            f"({metrics['correct']}/{metrics['total']})"
+        )
 
     # Check if target reached
     target_acc = 80.0
     if test_acc >= target_acc:
         print(f"\n✓ Target accuracy ({target_acc}%) REACHED!")
     else:
-        print(f"\n✗ Target accuracy ({target_acc}%) not reached. "
-              f"Consider more epochs or tuning hyperparameters.")
+        print(
+            f"\n✗ Target accuracy ({target_acc}%) not reached. "
+            f"Consider more epochs or tuning hyperparameters."
+        )
 
 
 if __name__ == "__main__":
