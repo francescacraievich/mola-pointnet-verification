@@ -1,0 +1,162 @@
+# αβ-CROWN Configuration for MLP LiDAR Verification
+# Reference: https://github.com/Verified-Intelligence/alpha-beta-CROWN
+
+general:
+  device: cpu  # Use 'cuda' if GPU available
+  seed: 42
+  conv_mode: matrix  # More efficient for small networks
+  deterministic: true
+  double_fp: false
+  loss_reduction_func: sum
+  sparse_alpha: true
+  sparse_interm: true
+  save_adv_example: true
+  precompile_jit: false
+  complete_verifier: bab
+  enable_incomplete_verification: true
+  csv_name: null
+  results_file: null
+  root_path: ''
+
+model:
+  name: mlp_lidar
+  path: models/mlp_lidar.onnx
+  onnx_quirks: null
+  input_shape: [-1, 3]  # Batch dimension, 3 input features
+  onnx_loader: default_onnx_and_vnnlib_loader
+  onnx_optimization_flags: ['none']
+  onnx_vnnlib_joint_optimization_flags: ['none']
+
+data:
+  dataset: null  # Using VNN-LIB specs directly
+  mean: 0.0
+  std: 1.0  # Data is already normalized
+  num_outputs: 3
+
+specification:
+  type: lp
+  robustness_type: verified-acc
+  norm: inf
+  epsilon: null  # Set per-query in VNN-LIB
+
+solver:
+  batch_size: 1
+  alpha-crown:
+    alpha: true
+    lr_alpha: 0.1
+    iteration: 100
+    share_alphas: false
+    lr_decay: 0.98
+    full_conv_alpha: true
+    max_coeff_mul: 1e10
+    matmul_share_alphas: false
+
+  beta-crown:
+    beta: true
+    lr_beta: 0.05
+    beta_warmup: true
+    iteration: 50
+    early_stop_patience: 10
+
+  forward:
+    refine: false
+    max_dim: 10000
+
+  multi_class:
+    label_batch_size: 1
+    skip_with_refined_bound: true
+
+bab:
+  initial_max_domains: 100000
+  max_domains: 100000
+  decision_thresh: 0
+  timeout: 60
+  timeout_scale: 1.0
+  override_timeout: null
+  get_upper_bound: false
+  dfs_percent: 0.0
+  pruning_in_iteration: true
+  pruning_in_iteration_ratio: 0.2
+  sort_targets: false
+  batched_domain_list: true
+  optimized_interm: ''
+  interm_transfer: true
+  recompute_interm: false
+  sort_domain_interval: -1
+
+  branching:
+    method: sb
+    candidates: 3
+    reduceop: min
+    enable_intermediate_bound_opt: false
+    branching_input_and_activation: false
+    branching_input_and_activation_order: [input, activation]
+    branching_input_iterations: 30
+    branching_relu_iterations: 50
+    nonlinear_split:
+      method: shortcut
+      num_branches: 2
+      branching_point_method: uniform
+      num_constrain: 4
+      loose_tanh_threshold: null
+      filter: false
+      filter_beta: false
+      filter_batch_size: 1000
+      filter_iterations: 25
+      use_min: false
+      var_list_threshold: 1
+      sort_index: true
+      shortcut_method: heuristic
+      input_split:
+        enable: false
+        enhanced_bound_prop_method: alpha-crown
+        enhanced_branching_method: naive
+        enhanced_bound_patience: 100
+        attack_patience: 100
+        adv_check: 0
+        split_partitions: 2
+        sb_margin_weight: 1.0
+        sb_primary_spec: null
+        sb_primary_spec_iter: 1
+        sb_sum: false
+        bf_backup_thresh: -1
+        bf_rhs_offset: 0
+        bf_zero_crossing_score: false
+        ibp_enhancement: false
+        catch_assertion: false
+        compare_with_old_bounds: false
+        update_rhs_with_attack: false
+
+  attack:
+    enabled: false
+    beam_candidates: 8
+    beam_depth: 7
+    max_dive_fix_ratio: 0.8
+    min_local_free_ratio: 0.2
+    mip_start_iteration: 5
+    mip_timeout: 30.0
+    adv_pool_threshold: null
+    refined_mip_attacker: false
+    refined_batch_size: null
+
+  cut:
+    enabled: false
+
+attack:
+  pgd_order: before
+  pgd_steps: 100
+  pgd_restarts: 50
+  pgd_batch_size: 1000000
+  pgd_early_stop: true
+  pgd_lr_decay: 0.99
+  pgd_alpha: auto
+  pgd_loss_mode: null
+  enable_mip_attack: false
+  adv_saver: default_adv_saver
+  early_stop_condition: default_early_stop_condition
+  adv_example_finalizer: default_adv_example_finalizer
+  pgd_loss: null
+  cex_path: ./adv_examples
+
+debug:
+  lp_test: null
