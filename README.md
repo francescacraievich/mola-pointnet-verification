@@ -1,5 +1,8 @@
 # MLP-LiDAR Formal Verification with αβ-CROWN
 
+[![CI](https://github.com/francescacraievich/mola-pointnet-verification/actions/workflows/ci.yml/badge.svg)](https://github.com/francescacraievich/mola-pointnet-verification/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/francescacraievich/mola-pointnet-verification/graph/badge.svg)](https://codecov.io/gh/francescacraievich/mola-pointnet-verification)
+
 Formal verification of an MLP classifier for LiDAR point clouds using αβ-CROWN, with comparison to adversarial attacks from NSGA-III optimization.
 
 ## Overview
@@ -153,7 +156,7 @@ mola-mlp-verification/
 MLP designed for efficient verification (~100K parameters):
 
 ```
-Input (3) → Linear(128) → ReLU → Linear(256) → ReLU → Linear(128) → ReLU → Linear(3)
+Input (3) → Linear(256) → ReLU → Linear(256) → ReLU → Linear(128) → ReLU → Linear(3)
 ```
 
 - **Input**: 3 features (x, y, z coordinates)
