@@ -1,0 +1,288 @@
+{
+  "timestamp": "2026-01-02T09:42:14.028102",
+  "model": "PointNet (Max-Pooling)",
+  "method": "\u03b1,\u03b2-CROWN Python API",
+  "n_samples": 10,
+  "results": {
+    "0.005": {
+      "epsilon": 0.005,
+      "cm": 0.75,
+      "verified": 9,
+      "unsafe": 1,
+      "errors": 0,
+      "verified_pct": 90.0,
+      "samples": [
+        {
+          "sample": 0,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 1,
+          "label": 0,
+          "status": "unsafe-pgd",
+          "verified": false
+        },
+        {
+          "sample": 2,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 3,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 4,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 5,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 6,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 7,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 8,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 9,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        }
+      ]
+    },
+    "0.01": {
+      "epsilon": 0.01,
+      "cm": 1.5,
+      "verified": 9,
+      "unsafe": 1,
+      "errors": 0,
+      "verified_pct": 90.0,
+      "samples": [
+        {
+          "sample": 0,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 1,
+          "label": 0,
+          "status": "unsafe-pgd",
+          "verified": false
+        },
+        {
+          "sample": 2,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 3,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 4,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 5,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 6,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 7,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 8,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 9,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        }
+      ]
+    },
+    "0.02": {
+      "epsilon": 0.02,
+      "cm": 3.0,
+      "verified": 9,
+      "unsafe": 1,
+      "errors": 0,
+      "verified_pct": 90.0,
+      "samples": [
+        {
+          "sample": 0,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 1,
+          "label": 0,
+          "status": "unsafe-pgd",
+          "verified": false
+        },
+        {
+          "sample": 2,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 3,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 4,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 5,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 6,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 7,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 8,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 9,
+          "label": 0,
+          "status": "safe-incomplete",
+          "verified": true
+        }
+      ]
+    },
+    "0.04": {
+      "epsilon": 0.04,
+      "cm": 6.0,
+      "verified": 3,
+      "unsafe": 1,
+      "errors": 6,
+      "verified_pct": 30.0,
+      "samples": [
+        {
+          "sample": 0,
+          "label": 0,
+          "status": "error",
+          "error": "The following operation failed in the TorchScript interpreter.\nTraceback of TorchScript (most recent call last):\n  File \"/home/francesca/mola-pointnet-verification/alpha-beta-CROWN/complete_verifier/auto_LiRPA/operators/clampmult.py\", line 38, in clamp_mutiply_forward\n        \"\"\"Forward operations; actually the same as the reference implementation.\"\"\"\n        A_pos = A.clamp(min=0)\n        A_neg = A.clamp(max=0)    \n                ~~~~~~~ <--- HERE\n        if same_slope:\n            # \"same-slope\" option is enabled; lower and upper bounds use the same A.\nRuntimeError: CUDA out of memory. Tried to allocate 436.00 MiB. GPU 0 has a total capacity of 3.65 GiB of which 231.12 MiB is free. Including non-PyTorch memory, this process has 3.40 GiB memory in use. Of the allocated memory 3.05 GiB is allocated by PyTorch, and 256.60 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)\n"
+        },
+        {
+          "sample": 1,
+          "label": 0,
+          "status": "unsafe-pgd",
+          "verified": false
+        },
+        {
+          "sample": 2,
+          "label": 0,
+          "status": "error",
+          "error": "The following operation failed in the TorchScript interpreter.\nTraceback of TorchScript (most recent call last):\nRuntimeError: CUDA out of memory. Tried to allocate 178.00 MiB. GPU 0 has a total capacity of 3.65 GiB of which 35.12 MiB is free. Including non-PyTorch memory, this process has 3.60 GiB memory in use. Of the allocated memory 3.42 GiB is allocated by PyTorch, and 77.81 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)\n"
+        },
+        {
+          "sample": 3,
+          "label": 1,
+          "status": "error",
+          "error": "The following operation failed in the TorchScript interpreter.\nTraceback of TorchScript (most recent call last):\nRuntimeError: CUDA out of memory. Tried to allocate 204.00 MiB. GPU 0 has a total capacity of 3.65 GiB of which 85.12 MiB is free. Including non-PyTorch memory, this process has 3.55 GiB memory in use. Of the allocated memory 3.39 GiB is allocated by PyTorch, and 55.94 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)\n"
+        },
+        {
+          "sample": 4,
+          "label": 0,
+          "status": "error",
+          "error": "The following operation failed in the TorchScript interpreter.\nTraceback of TorchScript (most recent call last):\nRuntimeError: CUDA out of memory. Tried to allocate 206.00 MiB. GPU 0 has a total capacity of 3.65 GiB of which 73.12 MiB is free. Including non-PyTorch memory, this process has 3.56 GiB memory in use. Of the allocated memory 3.41 GiB is allocated by PyTorch, and 50.25 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)\n"
+        },
+        {
+          "sample": 5,
+          "label": 0,
+          "status": "error",
+          "error": "The following operation failed in the TorchScript interpreter.\nTraceback of TorchScript (most recent call last):\nRuntimeError: CUDA out of memory. Tried to allocate 176.00 MiB. GPU 0 has a total capacity of 3.65 GiB of which 103.12 MiB is free. Including non-PyTorch memory, this process has 3.53 GiB memory in use. Of the allocated memory 3.37 GiB is allocated by PyTorch, and 53.93 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)\n"
+        },
+        {
+          "sample": 6,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 7,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 8,
+          "label": 1,
+          "status": "safe-incomplete",
+          "verified": true
+        },
+        {
+          "sample": 9,
+          "label": 0,
+          "status": "error",
+          "error": "The following operation failed in the TorchScript interpreter.\nTraceback of TorchScript (most recent call last):\nRuntimeError: CUDA out of memory. Tried to allocate 450.00 MiB. GPU 0 has a total capacity of 3.65 GiB of which 117.12 MiB is free. Including non-PyTorch memory, this process has 3.52 GiB memory in use. Of the allocated memory 3.19 GiB is allocated by PyTorch, and 222.48 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)\n"
+        }
+      ]
+    }
+  }
+}

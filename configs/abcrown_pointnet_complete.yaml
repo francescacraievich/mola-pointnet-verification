@@ -1,0 +1,106 @@
+# ============================================================================
+# α,β-CROWN Configuration for PointNet Verification
+# Based on official VNN-COMP configuration format
+# Documentation: https://github.com/Verified-Intelligence/alpha-beta-CROWN
+# ============================================================================
+
+general:
+  device: cuda                    # Use GPU for verification
+  seed: 100                       # Random seed for reproducibility
+  conv_mode: matrix               # "matrix" mode supports Conv1d (patches doesn't)
+  deterministic: false
+  double_fp: false
+  loss_reduction_func: sum
+  sparse_alpha: true
+  sparse_interm: true
+  save_adv_example: false
+  precompile_jit: false
+  complete_verifier: bab          # Branch-and-bound with beta-CROWN
+  enable_incomplete_verification: true  # Enable α-CROWN first
+  results_file: /home/francesca/mola-pointnet-verification/results/abcrown_results.txt
+  root_path: /home/francesca/mola-pointnet-verification
+
+model:
+  onnx_path: /home/francesca/mola-pointnet-verification/models/pointnet_mean_for_abcrown.onnx
+  input_shape: [-1, 64, 3]        # Batch, points, features
+  cache_onnx_conversion: false
+  flatten_final_output: false
+
+data:
+  start: 0
+  end: 10
+  num_outputs: 2                  # Binary classification: CRITICAL vs NON_CRITICAL
+  mean: 0.0                       # No normalization
+  std: 1.0
+
+specification:
+  type: lp                        # L_p norm perturbation
+  robustness_type: verified-acc   # Verify against all labels
+  norm: .inf                      # L-infinity norm
+  epsilon: 0.005                  # Perturbation budget
+  vnnlib_path: /home/francesca/mola-pointnet-verification/specs/spec_mean_sample0_eps0.005.vnnlib
+
+solver:
+  batch_size: 256                 # Reduce for smaller GPU memory
+  auto_enlarge_batch_size: true
+  min_batch_size_ratio: 0.1
+  use_float64_in_last_iteration: false
+  early_stop_patience: 10
+  bound_prop_method: alpha-crown  # Use α-CROWN for bound propagation
+  prune_after_crown: true
+
+  crown:
+    batch_size: 1000000000
+    max_crown_size: 1000000000
+
+  alpha-crown:
+    alpha: true
+    lr_alpha: 0.1                 # Learning rate for alpha
+    iteration: 100                # Iterations for incomplete verification
+    share_alphas: false
+    lr_decay: 0.98
+    full_conv_alpha: true
+
+  beta-crown:
+    lr_alpha: 0.01                # Learning rate for alpha in BaB
+    lr_beta: 0.05                 # Learning rate for beta
+    lr_decay: 0.98
+    optimizer: adam
+    iteration: 50                 # Iterations per BaB node
+    beta: true
+    beta_warmup: true
+
+bab:
+  max_domains: 100000             # Max subproblems
+  decision_thresh: 0              # Threshold for verified
+  timeout: 120                    # 2 minutes per sample
+  timeout_scale: 1
+  max_iterations: -1
+  pruning_in_iteration: true
+  pruning_in_iteration_ratio: 0.2
+  batched_domain_list: true
+  tree_traversal: depth_first
+
+  branching:
+    method: kfsb                  # k-layer filtered smart branching
+    candidates: 3                 # Candidates for branching
+    reduceop: min
+    enable_intermediate_bound_opt: false
+
+    nonlinear_split:
+      method: bbps                # Branching point selection
+      num_branches: 2
+      filter: false
+
+attack:
+  general_attack: true            # Enable PGD attack first
+  pgd_order: before               # Run attack before verification
+  pgd_steps: 100                  # PGD iterations
+  pgd_restarts: 30                # Random restarts
+  pgd_batch_size: 100000000
+  pgd_early_stop: true
+  pgd_lr_decay: 0.99
+  pgd_alpha: auto
+
+debug:
+  view_model: false

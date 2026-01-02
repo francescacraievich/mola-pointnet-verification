@@ -29,3 +29,12 @@ dist/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Alpha-beta-CROWN (cloned repo, large)
+alpha-beta-CROWN/
+
+# Generated specs (can be regenerated)
+specs/
+
+# Verification logs
+*.log
