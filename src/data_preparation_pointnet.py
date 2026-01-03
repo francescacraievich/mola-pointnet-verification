@@ -218,7 +218,7 @@ def compute_local_features_cpu(points: np.ndarray, k: int = 10) -> Tuple[np.ndar
 
 def extract_point_groups(
     frame: np.ndarray,
-    n_points: int = 64,
+    n_points: int = 512,
     n_samples: int = 100,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -287,7 +287,7 @@ def extract_point_groups(
 def prepare_pointnet_dataset(
     source_path: Path,
     output_path: Path,
-    n_points: int = 64,
+    n_points: int = 512,
     n_train_samples: int = 10000,
     n_test_samples: int = 2000,
     seed: int = 42,
@@ -439,7 +439,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=str, default="/home/francesca/mola-adversarial-nsga3/data")
     parser.add_argument("--output", type=str, default="data/pointnet")
-    parser.add_argument("--n-points", type=int, default=64)
+    parser.add_argument("--n-points", type=int, default=512)
     parser.add_argument("--n-train", type=int, default=10000)
     parser.add_argument("--n-test", type=int, default=2000)
     parser.add_argument("--seed", type=int, default=42)

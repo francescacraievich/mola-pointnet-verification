@@ -114,7 +114,7 @@ def evaluate(model, loader, criterion):
 def train_pointnet(
     data_path: Path,
     output_path: Path,
-    n_points: int = 64,
+    n_points: int = 512,
     num_classes: int = 2,
     epochs: int = 50,
     batch_size: int = 64,
@@ -234,7 +234,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=str, default="data/pointnet")
     parser.add_argument("--output", type=str, default="models")
-    parser.add_argument("--n-points", type=int, default=64)
+    parser.add_argument("--n-points", type=int, default=512)
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--lr", type=float, default=0.001)

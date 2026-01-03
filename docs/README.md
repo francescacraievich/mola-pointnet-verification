@@ -31,7 +31,7 @@ PointNet neural networks are widely used for 3D point cloud processing. Formal v
 ```python
 # Simplified architecture for verification
 class PointNetForVerification(nn.Module):
-    def __init__(self, n_points=64, num_classes=2):
+    def __init__(self, n_points=512, num_classes=2):
         # MLP: 3 -> 64 -> 128 -> 256
         # Global MaxPool
         # Classifier: 256 -> 128 -> 64 -> num_classes
@@ -50,7 +50,7 @@ class PointNetForVerification(nn.Module):
 | Parameter | Value |
 |-----------|-------|
 | Epsilon (ε) | 0.01 |
-| Number of points | 64 |
+| Number of points | 512 |
 | Timeout | 300s |
 | Method | α,β-CROWN |
 
@@ -63,7 +63,7 @@ class PointNetForVerification(nn.Module):
 Data is extracted from LiDAR point clouds and preprocessed as follows:
 
 1. **Normalization**: centering and scaling
-2. **Sampling**: selection of 64 points per group
+2. **Sampling**: selection of 512 points per group
 3. **Feature extraction**: coordinates (x, y, z)
 
 ### 3.2 Classes

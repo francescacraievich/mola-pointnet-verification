@@ -14,7 +14,7 @@ from pointnet_model import PointNetForVerification
 def export_pointnet_onnx(
     model_path: Path,
     output_path: Path,
-    n_points: int = 64,
+    n_points: int = 512,
 ):
     """
     Export PointNet to ONNX.
@@ -50,7 +50,7 @@ def export_pointnet_onnx(
     model.eval()
 
     # Create dummy input - flattened for ONNX
-    # Input shape: (batch, n_points * 3) = (batch, 192) for 64 points
+    # Input shape: (batch, n_points * 3) = (batch, 1536) for 512 points
     dummy_input = torch.randn(1, n_points * 3)
 
     print(f"\n2. Exporting to ONNX...")
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="models/pointnet.pth")
     parser.add_argument("--output", type=str, default="models/pointnet.onnx")
-    parser.add_argument("--n-points", type=int, default=64)
+    parser.add_argument("--n-points", type=int, default=512)
 
     args = parser.parse_args()
 
