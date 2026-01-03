@@ -2,10 +2,12 @@
 venv/
 .venv/
 
-# Data files (too large for GitHub)
+# Data files (too large for GitHub without LFS)
 data/raw/
 data/processed/
+# Note: *.npy in data/pointnet/ tracked with Git LFS
 *.npy
+!data/pointnet/*.npy
 
 # Model weights (can be regenerated)
 models/*.pth
@@ -38,3 +40,8 @@ specs/
 
 # Verification logs
 *.log
+.ruff_cache/
+.mypy_cache/
+alpha-beta-CROWN/
+data/__MACOSX/bathtub/test/*
+data/ModelNet10/bathtub/*
