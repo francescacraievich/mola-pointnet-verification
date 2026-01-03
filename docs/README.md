@@ -6,86 +6,86 @@
 
 ## Abstract
 
-Questo report presenta un'analisi di verifica formale per reti neurali PointNet applicate alla classificazione di point cloud. Utilizziamo α,β-CROWN per verificare la robustezza del modello rispetto a perturbazioni dell'input.
+This report presents a formal verification analysis for PointNet neural networks applied to point cloud classification. We use α,β-CROWN to verify the model's robustness against input perturbations in safety-critical autonomous driving scenarios.
 
 ---
 
-## 1. Introduzione
+## 1. Introduction
 
-### 1.1 Contesto
+### 1.1 Background
 
-Le reti neurali PointNet sono ampiamente utilizzate per l'elaborazione di point cloud 3D. La verifica formale di queste reti è essenziale per applicazioni safety-critical come la guida autonoma.
+PointNet neural networks are widely used for 3D point cloud processing. Formal verification of these networks is essential for safety-critical applications such as autonomous driving, where incorrect classifications can have severe consequences.
 
-### 1.2 Obiettivi
+### 1.2 Objectives
 
-- Verificare la robustezza locale del modello PointNet
-- Analizzare le proprietà di sicurezza della rete
-- Quantificare i bound di perturbazione ammissibili
+- Verify local robustness of the PointNet model
+- Analyze safety properties of the network
+- Quantify admissible perturbation bounds
 
 ---
 
-## 2. Metodologia
+## 2. Methodology
 
-### 2.1 Architettura PointNet
+### 2.1 PointNet Architecture
 
 ```python
-# Architettura semplificata per verifica
+# Simplified architecture for verification
 class PointNetForVerification(nn.Module):
     def __init__(self, n_points=64, num_classes=2):
         # MLP: 3 -> 64 -> 128 -> 256
-        # MaxPool globale
+        # Global MaxPool
         # Classifier: 256 -> 128 -> 64 -> num_classes
 ```
 
 ### 2.2 α,β-CROWN
 
-α,β-CROWN è un framework state-of-the-art per la verifica di reti neurali che utilizza:
+α,β-CROWN is a state-of-the-art neural network verification framework that uses:
 
-- **Linear Relaxation**: rilassamento lineare dei vincoli non-lineari
-- **Branch and Bound**: per raffinare i bound
-- **GPU Acceleration**: per scalare a reti più grandi
+- **Linear Relaxation**: linear relaxation of non-linear constraints
+- **Branch and Bound**: to refine bounds iteratively
+- **GPU Acceleration**: to scale to larger networks
 
-### 2.3 Configurazione della Verifica
+### 2.3 Verification Configuration
 
-| Parametro | Valore |
-|-----------|--------|
+| Parameter | Value |
+|-----------|-------|
 | Epsilon (ε) | 0.01 |
-| Numero punti | 64 |
+| Number of points | 64 |
 | Timeout | 300s |
-| Metodo | α,β-CROWN |
+| Method | α,β-CROWN |
 
 ---
 
 ## 3. Dataset
 
-### 3.1 Preparazione dei Dati
+### 3.1 Data Preparation
 
-I dati sono estratti da point cloud LiDAR e preprocessati per:
+Data is extracted from LiDAR point clouds and preprocessed as follows:
 
-1. **Normalizzazione**: centramento e scaling
-2. **Sampling**: selezione di 64 punti per gruppo
-3. **Feature extraction**: coordinate (x, y, z)
+1. **Normalization**: centering and scaling
+2. **Sampling**: selection of 64 points per group
+3. **Feature extraction**: coordinates (x, y, z)
 
-### 3.2 Classi
+### 3.2 Classes
 
-- **Classe 0**: Regioni non critiche
-- **Classe 1**: Regioni critiche (ostacoli, pedoni, ecc.)
+- **Class 0**: Non-critical regions
+- **Class 1**: Critical regions (obstacles, pedestrians, etc.)
 
 ---
 
-## 4. Risultati
+## 4. Results
 
-### 4.1 Accuratezza del Modello
+### 4.1 Model Accuracy
 
-| Metrica | Valore |
-|---------|--------|
+| Metric | Value |
+|--------|-------|
 | Training Accuracy | XX.X% |
 | Test Accuracy | XX.X% |
-| Loss finale | X.XXX |
+| Final Loss | X.XXX |
 
-### 4.2 Risultati della Verifica
+### 4.2 Verification Results
 
-<!-- TODO: inserire risultati reali -->
+<!-- TODO: insert actual results -->
 
 ```
 Verification Results:
@@ -95,39 +95,39 @@ Verification Results:
 - Verification Rate: XX.X%
 ```
 
-### 4.3 Analisi dei Bound
+### 4.3 Bound Analysis
 
-<!-- TODO: inserire grafici -->
-
----
-
-## 5. Discussione
-
-### 5.1 Interpretazione dei Risultati
-
-I risultati mostrano che...
-
-### 5.2 Limitazioni
-
-- Scalabilità a point cloud più grandi
-- Gestione del MaxPool nella verifica
-- Trade-off tra precisione e tempo di verifica
+<!-- TODO: insert plots -->
 
 ---
 
-## 6. Conclusioni
+## 5. Discussion
 
-Questo lavoro ha dimostrato la fattibilità della verifica formale per reti PointNet. I risultati indicano che...
+### 5.1 Interpretation of Results
 
-### 6.1 Lavori Futuri
+The results show that...
 
-- Estensione a PointNet++
-- Verifica di proprietà globali
-- Integrazione con pipeline di guida autonoma
+### 5.2 Limitations
+
+- Scalability to larger point clouds
+- MaxPool handling in verification
+- Trade-off between precision and verification time
 
 ---
 
-## Riferimenti
+## 6. Conclusions
+
+This work demonstrated the feasibility of formal verification for PointNet networks. The results indicate that...
+
+### 6.1 Future Work
+
+- Extension to PointNet++
+- Verification of global properties
+- Integration with autonomous driving pipelines
+
+---
+
+## References
 
 1. Qi, C. R., et al. "PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation." CVPR 2017.
 2. Wang, S., et al. "Beta-CROWN: Efficient Bound Propagation with Per-neuron Split Constraints for Neural Network Robustness Verification." NeurIPS 2021.
@@ -136,5 +136,5 @@ Questo lavoro ha dimostrato la fattibilità della verifica formale per reti Poin
 ---
 
 <p align="center">
-  <i>Report generato per il progetto mola-pointnet-verification</i>
+  <i>Report generated for the mola-pointnet-verification project</i>
 </p>
