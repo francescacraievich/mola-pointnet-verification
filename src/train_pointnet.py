@@ -13,7 +13,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
-from pointnet_model import PointNetForVerification, PointNetClassifier, PointNetLarge
+from pointnet_model import PointNetClassifier, PointNetForVerification, PointNetLarge
 
 # Device
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -31,12 +31,10 @@ def load_dataset(data_path: Path):
 
     # Convert to tensors
     train_data = TensorDataset(
-        torch.from_numpy(train_groups).float(),
-        torch.from_numpy(train_labels).long()
+        torch.from_numpy(train_groups).float(), torch.from_numpy(train_labels).long()
     )
     test_data = TensorDataset(
-        torch.from_numpy(test_groups).float(),
-        torch.from_numpy(test_labels).long()
+        torch.from_numpy(test_groups).float(), torch.from_numpy(test_labels).long()
     )
 
     return train_data, test_data
@@ -61,8 +59,14 @@ def train_epoch(model, loader, criterion, optimizer):
             # Add regularization for feature transform
             loss = criterion(outputs, batch_labels)
             if feat_trans is not None:
-                identity = torch.eye(64, device=DEVICE).unsqueeze(0).repeat(batch_groups.size(0), 1, 1)
-                reg_loss = torch.mean(torch.norm(identity - torch.bmm(feat_trans, feat_trans.transpose(1, 2)), dim=(1, 2)))
+                identity = (
+                    torch.eye(64, device=DEVICE).unsqueeze(0).repeat(batch_groups.size(0), 1, 1)
+                )
+                reg_loss = torch.mean(
+                    torch.norm(
+                        identity - torch.bmm(feat_trans, feat_trans.transpose(1, 2)), dim=(1, 2)
+                    )
+                )
                 loss = loss + 0.001 * reg_loss
         else:
             outputs = model(batch_groups)
@@ -77,7 +81,7 @@ def train_epoch(model, loader, criterion, optimizer):
         total += batch_labels.size(0)
         correct += predicted.eq(batch_labels).sum().item()
 
-    return total_loss / total, 100. * correct / total
+    return total_loss / total, 100.0 * correct / total
 
 
 def evaluate(model, loader, criterion):
@@ -104,7 +108,7 @@ def evaluate(model, loader, criterion):
             total += batch_labels.size(0)
             correct += predicted.eq(batch_labels).sum().item()
 
-    return total_loss / total, 100. * correct / total
+    return total_loss / total, 100.0 * correct / total
 
 
 def train_pointnet(
@@ -140,8 +144,12 @@ def train_pointnet(
     print("\n1. Loading dataset...")
     train_data, test_data = load_dataset(data_path)
 
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
-    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(
+        train_data, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True
+    )
+    test_loader = DataLoader(
+        test_data, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True
+    )
 
     # Create model
     print(f"\n2. Creating model (type={model_type}, use_tnet={use_tnet})...")
@@ -188,8 +196,10 @@ def train_pointnet(
             best_model_state = model.state_dict().copy()
 
         if (epoch + 1) % 5 == 0 or epoch == 0:
-            print(f"   Epoch {epoch+1:3d}: Train Loss={train_loss:.4f}, Acc={train_acc:.1f}% | "
-                  f"Test Loss={test_loss:.4f}, Acc={test_acc:.1f}%")
+            print(
+                f"   Epoch {epoch+1:3d}: Train Loss={train_loss:.4f}, Acc={train_acc:.1f}% | "
+                f"Test Loss={test_loss:.4f}, Acc={test_acc:.1f}%"
+            )
 
     # Load best model
     if best_model_state is not None:
@@ -204,14 +214,17 @@ def train_pointnet(
     print(f"\n5. Saving model...")
     output_path.mkdir(parents=True, exist_ok=True)
     model_path = output_path / "pointnet.pth"
-    torch.save({
-        "model_state_dict": model.state_dict(),
-        "n_points": n_points,
-        "num_classes": num_classes,
-        "use_tnet": use_tnet,
-        "model_type": model_type,
-        "test_accuracy": best_acc,
-    }, model_path)
+    torch.save(
+        {
+            "model_state_dict": model.state_dict(),
+            "n_points": n_points,
+            "num_classes": num_classes,
+            "use_tnet": use_tnet,
+            "model_type": model_type,
+            "test_accuracy": best_acc,
+        },
+        model_path,
+    )
     print(f"   Saved to {model_path}")
 
     return model, best_acc
@@ -226,8 +239,9 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--lr", type=float, default=0.001)
     parser.add_argument("--use-tnet", action="store_true", default=True)
-    parser.add_argument("--model-type", type=str, default="verification",
-                       choices=["verification", "full", "large"])
+    parser.add_argument(
+        "--model-type", type=str, default="verification", choices=["verification", "full", "large"]
+    )
 
     args = parser.parse_args()
 

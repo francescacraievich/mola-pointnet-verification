@@ -5,8 +5,8 @@ Export trained PointNet to ONNX format for αβ-CROWN verification.
 import argparse
 from pathlib import Path
 
-import torch
 import onnx
+import torch
 
 from pointnet_model import PointNetForVerification
 

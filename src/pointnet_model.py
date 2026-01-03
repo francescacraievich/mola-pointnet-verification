@@ -208,37 +208,37 @@ class PointNetForVerification(nn.Module):
             # (batch, n_points, 3) -> (batch, 3, n_points)
             x_t = x.transpose(1, 2)
             t = F.relu(self.tnet_conv1(x_t))  # (batch, 64, n_points)
-            t = F.relu(self.tnet_conv2(t))    # (batch, 128, n_points)
-            t = F.relu(self.tnet_conv3(t))    # (batch, 256, n_points)
+            t = F.relu(self.tnet_conv2(t))  # (batch, 128, n_points)
+            t = F.relu(self.tnet_conv3(t))  # (batch, 256, n_points)
             # Global pooling (mean for CROWN, max for original)
             if self.pooling == "mean":
-                t = torch.mean(t, dim=2)      # (batch, 256) - CROWN compatible
+                t = torch.mean(t, dim=2)  # (batch, 256) - CROWN compatible
             else:
-                t = torch.max(t, dim=2)[0]    # (batch, 256)
-            t = F.relu(self.tnet_fc1(t))      # (batch, 128)
-            t = F.relu(self.tnet_fc2(t))      # (batch, 64)
-            t = self.tnet_fc3(t)              # (batch, 9)
-            t = t.view(batch_size, 3, 3)      # (batch, 3, 3)
+                t = torch.max(t, dim=2)[0]  # (batch, 256)
+            t = F.relu(self.tnet_fc1(t))  # (batch, 128)
+            t = F.relu(self.tnet_fc2(t))  # (batch, 64)
+            t = self.tnet_fc3(t)  # (batch, 9)
+            t = t.view(batch_size, 3, 3)  # (batch, 3, 3)
             # Apply transformation to input points
-            x = torch.bmm(x, t)               # (batch, n_points, 3)
+            x = torch.bmm(x, t)  # (batch, n_points, 3)
 
         # Point-wise MLP
         # (batch, n_points, 3) -> (batch, 3, n_points)
         x = x.transpose(1, 2)
-        x = F.relu(self.conv1(x))             # (batch, 64, n_points)
-        x = F.relu(self.conv2(x))             # (batch, 128, n_points)
-        x = F.relu(self.conv3(x))             # (batch, 256, n_points)
+        x = F.relu(self.conv1(x))  # (batch, 64, n_points)
+        x = F.relu(self.conv2(x))  # (batch, 128, n_points)
+        x = F.relu(self.conv3(x))  # (batch, 256, n_points)
 
         # Global pooling (symmetric function for permutation invariance)
         if self.pooling == "mean":
-            x = torch.mean(x, dim=2)          # (batch, 256) - CROWN compatible
+            x = torch.mean(x, dim=2)  # (batch, 256) - CROWN compatible
         else:
-            x = torch.max(x, dim=2)[0]        # (batch, 256) - original PointNet
+            x = torch.max(x, dim=2)[0]  # (batch, 256) - original PointNet
 
         # Classifier
-        x = F.relu(self.fc1(x))               # (batch, 128)
-        x = F.relu(self.fc2(x))               # (batch, 64)
-        x = self.fc3(x)                       # (batch, num_classes)
+        x = F.relu(self.fc1(x))  # (batch, 128)
+        x = F.relu(self.fc2(x))  # (batch, 64)
+        x = self.fc3(x)  # (batch, num_classes)
 
         return x
 

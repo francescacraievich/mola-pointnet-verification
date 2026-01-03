@@ -78,10 +78,7 @@ def compute_local_features_gpu(points: np.ndarray, k: int = 10) -> Tuple[np.ndar
 
         # Compute covariance matrices: (batch, 3, 3)
         # cov = X^T @ X / (n-1)
-        batch_cov = torch.bmm(
-            batch_centered.transpose(1, 2),
-            batch_centered
-        ) / (k - 1)
+        batch_cov = torch.bmm(batch_centered.transpose(1, 2), batch_centered) / (k - 1)
 
         # Compute eigenvalues on GPU
         eigvals = torch.linalg.eigvalsh(batch_cov)  # (batch, 3), ascending order
@@ -320,13 +317,12 @@ def prepare_pointnet_dataset(
         print(f"   Using {NUM_WORKERS} parallel workers...")
 
         # Prepare arguments for each frame
-        args_list = [
-            (i, frames[i], n_points, samples_per_frame)
-            for i in range(len(frames))
-        ]
+        args_list = [(i, frames[i], n_points, samples_per_frame) for i in range(len(frames))]
 
         with ProcessPoolExecutor(max_workers=NUM_WORKERS) as executor:
-            futures = {executor.submit(process_single_frame, args): i for i, args in enumerate(args_list)}
+            futures = {
+                executor.submit(process_single_frame, args): i for i, args in enumerate(args_list)
+            }
 
             completed = 0
             for future in as_completed(futures):
@@ -383,23 +379,27 @@ def prepare_pointnet_dataset(
     n_per_class_train = min(n_train_samples // 2, len(critical_groups) - n_test_samples // 2)
     n_per_class_test = min(n_test_samples // 2, len(critical_groups) - n_per_class_train)
 
-    train_groups = np.concatenate([
-        critical_groups[:n_per_class_train],
-        non_critical_groups[:n_per_class_train]
-    ], axis=0)
-    train_labels = np.concatenate([
-        critical_labels[:n_per_class_train],
-        non_critical_labels[:n_per_class_train]
-    ], axis=0)
+    train_groups = np.concatenate(
+        [critical_groups[:n_per_class_train], non_critical_groups[:n_per_class_train]], axis=0
+    )
+    train_labels = np.concatenate(
+        [critical_labels[:n_per_class_train], non_critical_labels[:n_per_class_train]], axis=0
+    )
 
-    test_groups = np.concatenate([
-        critical_groups[n_per_class_train:n_per_class_train + n_per_class_test],
-        non_critical_groups[n_per_class_train:n_per_class_train + n_per_class_test]
-    ], axis=0)
-    test_labels = np.concatenate([
-        critical_labels[n_per_class_train:n_per_class_train + n_per_class_test],
-        non_critical_labels[n_per_class_train:n_per_class_train + n_per_class_test]
-    ], axis=0)
+    test_groups = np.concatenate(
+        [
+            critical_groups[n_per_class_train : n_per_class_train + n_per_class_test],
+            non_critical_groups[n_per_class_train : n_per_class_train + n_per_class_test],
+        ],
+        axis=0,
+    )
+    test_labels = np.concatenate(
+        [
+            critical_labels[n_per_class_train : n_per_class_train + n_per_class_test],
+            non_critical_labels[n_per_class_train : n_per_class_train + n_per_class_test],
+        ],
+        axis=0,
+    )
 
     # Final shuffle
     train_shuffle = np.random.permutation(len(train_groups))
@@ -437,8 +437,7 @@ def prepare_pointnet_dataset(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--source", type=str,
-                       default="/home/francesca/mola-adversarial-nsga3/data")
+    parser.add_argument("--source", type=str, default="/home/francesca/mola-adversarial-nsga3/data")
     parser.add_argument("--output", type=str, default="data/pointnet")
     parser.add_argument("--n-points", type=int, default=64)
     parser.add_argument("--n-train", type=int, default=10000)
