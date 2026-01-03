@@ -2,21 +2,21 @@
 Tests for PointNet models.
 """
 
-import pytest
-import torch
-
 import sys
 from pathlib import Path
+
+import pytest
+import torch
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from pointnet_model import (
-    TNet,
-    PointNetEncoder,
     PointNetClassifier,
+    PointNetEncoder,
     PointNetForVerification,
     PointNetLarge,
+    TNet,
 )
 
 
