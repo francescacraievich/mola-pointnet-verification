@@ -8,6 +8,7 @@ data/processed/
 *.npy
 !data/pointnet/*.npy
 !data/raw/*.npy
+!runs/*.npy
 
 # Model weights (can be regenerated)
 models/*.pth
