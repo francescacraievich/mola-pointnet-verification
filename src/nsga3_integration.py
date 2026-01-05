@@ -15,7 +15,6 @@ from typing import Dict, Optional, Tuple
 
 import numpy as np
 
-
 # Genome parameter names (must match perturbation_generator.py)
 GENOME_PARAMS = [
     "noise_dir_x",
@@ -49,9 +48,7 @@ PARAM_TO_FEATURE = {
 }
 
 
-def load_nsga3_results(
-    results_dir: Path, run_id: int = 12
-) -> Dict[str, np.ndarray]:
+def load_nsga3_results(results_dir: Path, run_id: int = 12) -> Dict[str, np.ndarray]:
     """
     Load NSGA-III optimization results.
 
@@ -311,9 +308,7 @@ def compute_criticality_score(
     return score
 
 
-def get_pareto_front_summary(
-    nsga3_results_dir: Path, run_id: int = 12
-) -> Dict[str, any]:
+def get_pareto_front_summary(nsga3_results_dir: Path, run_id: int = 12) -> Dict[str, any]:
     """
     Get a summary of the Pareto front for analysis.
 
@@ -342,9 +337,7 @@ def get_pareto_front_summary(
     }
 
 
-def load_pareto_set(
-    nsga3_results_dir: Path, run_id: int = 12
-) -> Optional[np.ndarray]:
+def load_pareto_set(nsga3_results_dir: Path, run_id: int = 12) -> Optional[np.ndarray]:
     """
     Load the Pareto set (genomes) from NSGA-III results.
 
@@ -381,6 +374,7 @@ def compute_vulnerability_from_genome(
     Returns:
         Vulnerability score in [0, 1] range
     """
+
     # Decode genome parameters from [-1, 1] to [0, 1]
     def decode(val):
         return (val + 1) / 2

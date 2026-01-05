@@ -216,10 +216,10 @@ def process_single_frame(args: Tuple) -> Tuple[np.ndarray, np.ndarray]:
         # Use NSGA3-derived weights (passed as parameter)
         # These are dynamically loaded from Pareto set analysis
         criticality_score = (
-            mean_linearity * weights['linearity']
-            + mean_curvature * weights['curvature']
-            + mean_density_var * weights['density_var']
-            + mean_nonplanarity * weights['nonplanarity']
+            mean_linearity * weights["linearity"]
+            + mean_curvature * weights["curvature"]
+            + mean_density_var * weights["density_var"]
+            + mean_nonplanarity * weights["nonplanarity"]
         )
 
         groups.append(group)
@@ -470,7 +470,9 @@ def prepare_pointnet_dataset(
         print(f"   Using {NUM_WORKERS} parallel workers...")
 
         # Prepare arguments for each frame (include weights)
-        args_list = [(i, frames[i], n_points, samples_per_frame, weights) for i in range(len(frames))]
+        args_list = [
+            (i, frames[i], n_points, samples_per_frame, weights) for i in range(len(frames))
+        ]
 
         with ProcessPoolExecutor(max_workers=NUM_WORKERS) as executor:
             futures = {
