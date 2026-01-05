@@ -7,681 +7,506 @@
   "results": {
     "0.001": {
       "epsilon": 0.001,
-      "verified_count": 18,
-      "total_tested": 18,
+      "verified_count": 13,
+      "total_tested": 13,
       "verification_rate": 100.0,
-      "avg_time": 7.178577015778703,
-      "total_time": 129.21438628401665,
+      "avg_time": 6.785527768615374,
+      "total_time": 88.21186099199986,
       "samples": [
         {
-          "sample_idx": 1021,
+          "sample_idx": 737,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 8.22240788700583
+          "time": 4.3095072520081885
         },
         {
-          "sample_idx": 1463,
+          "sample_idx": 292,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 9.570366063999245
+          "time": 8.743131529001403
         },
         {
-          "sample_idx": 1468,
+          "sample_idx": 207,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 7.681191796000348
+          "time": 7.550556775997393
         },
         {
-          "sample_idx": 1284,
+          "sample_idx": 748,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 6.967666466996889
+          "time": 7.441342984995572
         },
         {
-          "sample_idx": 834,
+          "sample_idx": 240,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 5.7476062340065255
+          "time": 7.76296763800201
         },
         {
-          "sample_idx": 1328,
+          "sample_idx": 133,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 6.524932633998105
+          "time": 6.934153465001145
         },
         {
-          "sample_idx": 1229,
+          "sample_idx": 909,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 9.065667720999045
+          "time": 6.653481736997492
         },
         {
-          "sample_idx": 1002,
-          "label": 0,
-          "verified": true,
-          "dominant_class": 0,
-          "time": 7.209204857004806
-        },
-        {
-          "sample_idx": 279,
-          "label": 0,
-          "verified": true,
-          "dominant_class": 0,
-          "time": 6.917619455998647
-        },
-        {
-          "sample_idx": 341,
+          "sample_idx": 632,
           "label": 1,
           "verified": true,
           "dominant_class": 1,
-          "time": 8.762888721001218
+          "time": 7.056822164988262
         },
         {
-          "sample_idx": 15,
+          "sample_idx": 264,
           "label": 1,
           "verified": true,
           "dominant_class": 1,
-          "time": 6.692720256003668
+          "time": 5.8931971520069055
         },
         {
-          "sample_idx": 116,
+          "sample_idx": 135,
           "label": 1,
           "verified": true,
           "dominant_class": 1,
-          "time": 5.908327008000924
+          "time": 6.974979346996406
         },
         {
-          "sample_idx": 1370,
+          "sample_idx": 797,
           "label": 1,
           "verified": true,
           "dominant_class": 1,
-          "time": 5.777902908994292
+          "time": 6.2692509300104575
         },
         {
-          "sample_idx": 1776,
+          "sample_idx": 996,
           "label": 1,
           "verified": true,
           "dominant_class": 1,
-          "time": 5.561204513003759
+          "time": 6.074696857991512
         },
         {
-          "sample_idx": 815,
+          "sample_idx": 489,
           "label": 1,
           "verified": true,
           "dominant_class": 1,
-          "time": 7.906443919004232
-        },
-        {
-          "sample_idx": 1837,
-          "label": 1,
-          "verified": true,
-          "dominant_class": 1,
-          "time": 6.666237352997996
-        },
-        {
-          "sample_idx": 818,
-          "label": 1,
-          "verified": true,
-          "dominant_class": 1,
-          "time": 7.2725174040024285
-        },
-        {
-          "sample_idx": 173,
-          "label": 1,
-          "verified": true,
-          "dominant_class": 1,
-          "time": 6.759481084998697
+          "time": 6.54777315800311
         }
       ]
     },
     "0.003": {
       "epsilon": 0.003,
-      "verified_count": 18,
-      "total_tested": 18,
-      "verification_rate": 100.0,
-      "avg_time": 9.607656084611033,
-      "total_time": 172.93780952299858,
+      "verified_count": 12,
+      "total_tested": 13,
+      "verification_rate": 92.30769230769232,
+      "avg_time": 6.552761577077596,
+      "total_time": 85.18590050200874,
       "samples": [
         {
-          "sample_idx": 1021,
+          "sample_idx": 737,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 10.009479633998126
+          "time": 9.764664483998786
         },
         {
-          "sample_idx": 1463,
+          "sample_idx": 292,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 8.19900479199714
+          "time": 8.577258517994778
         },
         {
-          "sample_idx": 1468,
+          "sample_idx": 207,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 8.861311910994118
+          "time": 7.944642529007979
         },
         {
-          "sample_idx": 1284,
+          "sample_idx": 748,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 7.792267978999007
+          "time": 7.5711633390019415
         },
         {
-          "sample_idx": 834,
+          "sample_idx": 240,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 7.9335177059983835
+          "time": 8.011064149002777
         },
         {
-          "sample_idx": 1328,
+          "sample_idx": 133,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 11.330583605995344
+          "time": 5.610501639996073
         },
         {
-          "sample_idx": 1229,
+          "sample_idx": 909,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 12.09037285100203
+          "time": 4.936024608992739
         },
         {
-          "sample_idx": 1002,
-          "label": 0,
-          "verified": true,
-          "dominant_class": 0,
-          "time": 9.411951071000658
-        },
-        {
-          "sample_idx": 279,
-          "label": 0,
-          "verified": true,
-          "dominant_class": 0,
-          "time": 11.158390508004231
-        },
-        {
-          "sample_idx": 341,
+          "sample_idx": 632,
           "label": 1,
           "verified": true,
           "dominant_class": 1,
-          "time": 11.029761243000394
+          "time": 6.316107734004618
         },
         {
-          "sample_idx": 15,
+          "sample_idx": 264,
           "label": 1,
           "verified": true,
           "dominant_class": 1,
-          "time": 8.445290732001013
+          "time": 5.721573768998496
         },
         {
-          "sample_idx": 116,
+          "sample_idx": 135,
           "label": 1,
           "verified": true,
           "dominant_class": 1,
-          "time": 9.168830754999362
+          "time": 5.175198951998027
         },
         {
-          "sample_idx": 1370,
+          "sample_idx": 797,
           "label": 1,
           "verified": true,
           "dominant_class": 1,
-          "time": 10.496726184006548
+          "time": 5.122790503010037
         },
         {
-          "sample_idx": 1776,
+          "sample_idx": 996,
           "label": 1,
           "verified": true,
           "dominant_class": 1,
-          "time": 11.096468847004871
+          "time": 4.850806571004796
         },
         {
-          "sample_idx": 815,
+          "sample_idx": 489,
           "label": 1,
-          "verified": true,
-          "dominant_class": 1,
-          "time": 10.19061750399851
-        },
-        {
-          "sample_idx": 1837,
-          "label": 1,
-          "verified": true,
-          "dominant_class": 1,
-          "time": 8.711056120999274
-        },
-        {
-          "sample_idx": 818,
-          "label": 1,
-          "verified": true,
-          "dominant_class": 1,
-          "time": 8.696261242999753
-        },
-        {
-          "sample_idx": 173,
-          "label": 1,
-          "verified": true,
-          "dominant_class": 1,
-          "time": 8.315916835999815
+          "verified": false,
+          "dominant_class": -1,
+          "time": 5.584103704997688
         }
       ]
     },
     "0.005": {
       "epsilon": 0.005,
-      "verified_count": 15,
-      "total_tested": 18,
-      "verification_rate": 83.33333333333334,
-      "avg_time": 10.752706341554585,
-      "total_time": 193.54871414798254,
+      "verified_count": 12,
+      "total_tested": 13,
+      "verification_rate": 92.30769230769232,
+      "avg_time": 6.673723397307466,
+      "total_time": 86.75840416499705,
       "samples": [
         {
-          "sample_idx": 1021,
+          "sample_idx": 737,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 9.336824678000994
+          "time": 6.818750128993997
         },
         {
-          "sample_idx": 1463,
+          "sample_idx": 292,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 10.366983236999658
+          "time": 6.0444263980025426
         },
         {
-          "sample_idx": 1468,
+          "sample_idx": 207,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 10.154352147997997
+          "time": 7.078158985998016
         },
         {
-          "sample_idx": 1284,
+          "sample_idx": 748,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 10.4930524779993
+          "time": 5.4414480199920945
         },
         {
-          "sample_idx": 834,
+          "sample_idx": 240,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 12.996705136996752
+          "time": 6.449843941998552
         },
         {
-          "sample_idx": 1328,
+          "sample_idx": 133,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 12.594908671002486
+          "time": 5.005210383009398
         },
         {
-          "sample_idx": 1229,
+          "sample_idx": 909,
           "label": 0,
           "verified": true,
           "dominant_class": 0,
-          "time": 12.600977827998577
+          "time": 5.0071557679912075
         },
         {
-          "sample_idx": 1002,
-          "label": 0,
+          "sample_idx": 632,
+          "label": 1,
           "verified": true,
-          "dominant_class": 0,
-          "time": 12.5787519910009
+          "dominant_class": 1,
+          "time": 6.054816082993057
         },
         {
-          "sample_idx": 279,
-          "label": 0,
+          "sample_idx": 264,
+          "label": 1,
           "verified": true,
-          "dominant_class": 0,
-          "time": 11.347335079000914
+          "dominant_class": 1,
+          "time": 6.540970670001116
         },
         {
-          "sample_idx": 341,
+          "sample_idx": 135,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 5.757807311005308
+        },
+        {
+          "sample_idx": 797,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 8.474953483004356
+        },
+        {
+          "sample_idx": 996,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 7.411855184996966
+        },
+        {
+          "sample_idx": 489,
           "label": 1,
           "verified": false,
           "dominant_class": -1,
-          "time": 10.522087573997851
-        },
-        {
-          "sample_idx": 15,
-          "label": 1,
-          "verified": true,
-          "dominant_class": 1,
-          "time": 9.826158034993568
-        },
-        {
-          "sample_idx": 116,
-          "label": 1,
-          "verified": false,
-          "dominant_class": -1,
-          "time": 9.951993071998004
-        },
-        {
-          "sample_idx": 1370,
-          "label": 1,
-          "verified": true,
-          "dominant_class": 1,
-          "time": 9.863852575996134
-        },
-        {
-          "sample_idx": 1776,
-          "label": 1,
-          "verified": true,
-          "dominant_class": 1,
-          "time": 9.444575173001795
-        },
-        {
-          "sample_idx": 815,
-          "label": 1,
-          "verified": false,
-          "dominant_class": -1,
-          "time": 10.699070975999348
-        },
-        {
-          "sample_idx": 1837,
-          "label": 1,
-          "verified": true,
-          "dominant_class": 1,
-          "time": 10.128057201000047
-        },
-        {
-          "sample_idx": 818,
-          "label": 1,
-          "verified": true,
-          "dominant_class": 1,
-          "time": 11.25233699400269
-        },
-        {
-          "sample_idx": 173,
-          "label": 1,
-          "verified": true,
-          "dominant_class": 1,
-          "time": 9.390691299995524
+          "time": 10.673007807010435
         }
       ]
     },
     "0.007": {
       "epsilon": 0.007,
-      "verified_count": 10,
-      "total_tested": 18,
-      "verification_rate": 55.55555555555556,
-      "avg_time": 10.074368224444497,
-      "total_time": 181.3386280400009,
+      "verified_count": 8,
+      "total_tested": 13,
+      "verification_rate": 61.53846153846154,
+      "avg_time": 9.575912613844805,
+      "total_time": 124.48686397998245,
       "samples": [
         {
-          "sample_idx": 1021,
-          "label": 0,
-          "verified": true,
-          "dominant_class": 0,
-          "time": 12.479924099003256
-        },
-        {
-          "sample_idx": 1463,
-          "label": 0,
-          "verified": true,
-          "dominant_class": 0,
-          "time": 16.544666685003904
-        },
-        {
-          "sample_idx": 1468,
-          "label": 0,
-          "verified": true,
-          "dominant_class": 0,
-          "time": 13.5477263089997
-        },
-        {
-          "sample_idx": 1284,
-          "label": 0,
-          "verified": true,
-          "dominant_class": 0,
-          "time": 12.132750509998004
-        },
-        {
-          "sample_idx": 834,
-          "label": 0,
-          "verified": true,
-          "dominant_class": 0,
-          "time": 10.659360026998911
-        },
-        {
-          "sample_idx": 1328,
+          "sample_idx": 737,
           "label": 0,
           "verified": false,
           "dominant_class": -1,
-          "time": 16.371931994995975
+          "time": 11.64876505099528
         },
         {
-          "sample_idx": 1229,
-          "label": 0,
-          "verified": true,
-          "dominant_class": 0,
-          "time": 10.000149257000885
-        },
-        {
-          "sample_idx": 1002,
-          "label": 0,
-          "verified": true,
-          "dominant_class": 0,
-          "time": 12.235657678997086
-        },
-        {
-          "sample_idx": 279,
+          "sample_idx": 292,
           "label": 0,
           "verified": false,
           "dominant_class": -1,
-          "time": 8.715199540005415
+          "time": 11.644072133000009
         },
         {
-          "sample_idx": 341,
-          "label": 1,
+          "sample_idx": 207,
+          "label": 0,
           "verified": false,
           "dominant_class": -1,
-          "time": 8.107597371003067
+          "time": 13.360301841996261
         },
         {
-          "sample_idx": 15,
+          "sample_idx": 748,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 8.460702361000585
+        },
+        {
+          "sample_idx": 240,
+          "label": 0,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 8.738869413005887
+        },
+        {
+          "sample_idx": 133,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 8.39612175199727
+        },
+        {
+          "sample_idx": 909,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 8.815176928997971
+        },
+        {
+          "sample_idx": 632,
           "label": 1,
           "verified": true,
           "dominant_class": 1,
-          "time": 7.5847571449994575
+          "time": 9.21711092100304
         },
         {
-          "sample_idx": 116,
-          "label": 1,
-          "verified": false,
-          "dominant_class": -1,
-          "time": 7.143159814004321
-        },
-        {
-          "sample_idx": 1370,
-          "label": 1,
-          "verified": false,
-          "dominant_class": -1,
-          "time": 7.412672193997423
-        },
-        {
-          "sample_idx": 1776,
+          "sample_idx": 264,
           "label": 1,
           "verified": true,
           "dominant_class": 1,
-          "time": 8.46231968900247
+          "time": 9.409030006994726
         },
         {
-          "sample_idx": 815,
-          "label": 1,
-          "verified": false,
-          "dominant_class": -1,
-          "time": 7.5639575959939975
-        },
-        {
-          "sample_idx": 1837,
-          "label": 1,
-          "verified": false,
-          "dominant_class": -1,
-          "time": 7.513771300000371
-        },
-        {
-          "sample_idx": 818,
+          "sample_idx": 135,
           "label": 1,
           "verified": true,
           "dominant_class": 1,
-          "time": 7.513645375001943
+          "time": 8.052840005999315
         },
         {
-          "sample_idx": 173,
+          "sample_idx": 797,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 10.219407610988128
+        },
+        {
+          "sample_idx": 996,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 7.509651079002651
+        },
+        {
+          "sample_idx": 489,
           "label": 1,
           "verified": false,
           "dominant_class": -1,
-          "time": 7.349381454994727
+          "time": 9.01481487500132
         }
       ]
     },
     "0.01": {
       "epsilon": 0.01,
-      "verified_count": 0,
-      "total_tested": 18,
-      "verification_rate": 0.0,
-      "avg_time": 8.188612675721542,
-      "total_time": 147.39502816298773,
+      "verified_count": 3,
+      "total_tested": 13,
+      "verification_rate": 23.07692307692308,
+      "avg_time": 8.952679284768799,
+      "total_time": 116.38483070199436,
       "samples": [
         {
-          "sample_idx": 1021,
+          "sample_idx": 737,
           "label": 0,
           "verified": false,
           "dominant_class": -1,
-          "time": 8.006492674998299
+          "time": 9.867131895996863
         },
         {
-          "sample_idx": 1463,
+          "sample_idx": 292,
           "label": 0,
           "verified": false,
           "dominant_class": -1,
-          "time": 7.373017097001139
+          "time": 9.56233934199554
         },
         {
-          "sample_idx": 1468,
+          "sample_idx": 207,
           "label": 0,
           "verified": false,
           "dominant_class": -1,
-          "time": 7.481468063000648
+          "time": 11.450840409001103
         },
         {
-          "sample_idx": 1284,
+          "sample_idx": 748,
           "label": 0,
           "verified": false,
           "dominant_class": -1,
-          "time": 8.145617954003683
+          "time": 9.866314099999727
         },
         {
-          "sample_idx": 834,
+          "sample_idx": 240,
           "label": 0,
           "verified": false,
           "dominant_class": -1,
-          "time": 6.793427500997495
+          "time": 12.59223183299764
         },
         {
-          "sample_idx": 1328,
+          "sample_idx": 133,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 8.527648410003167
+        },
+        {
+          "sample_idx": 909,
           "label": 0,
           "verified": false,
           "dominant_class": -1,
-          "time": 9.198136516999512
+          "time": 10.020519017998595
         },
         {
-          "sample_idx": 1229,
-          "label": 0,
-          "verified": false,
-          "dominant_class": -1,
-          "time": 7.758616441999038
-        },
-        {
-          "sample_idx": 1002,
-          "label": 0,
-          "verified": false,
-          "dominant_class": -1,
-          "time": 7.374977202001901
-        },
-        {
-          "sample_idx": 279,
-          "label": 0,
-          "verified": false,
-          "dominant_class": -1,
-          "time": 7.357379674002004
-        },
-        {
-          "sample_idx": 341,
+          "sample_idx": 632,
           "label": 1,
           "verified": false,
           "dominant_class": -1,
-          "time": 8.774690624995856
+          "time": 10.388851372001227
         },
         {
-          "sample_idx": 15,
+          "sample_idx": 264,
           "label": 1,
           "verified": false,
           "dominant_class": -1,
-          "time": 9.235796872999344
+          "time": 5.7143342639901675
         },
         {
-          "sample_idx": 116,
+          "sample_idx": 135,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 4.683416829007911
+        },
+        {
+          "sample_idx": 797,
           "label": 1,
           "verified": false,
           "dominant_class": -1,
-          "time": 7.598659461000352
+          "time": 8.391420979998657
         },
         {
-          "sample_idx": 1370,
+          "sample_idx": 996,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 6.833174706000136
+        },
+        {
+          "sample_idx": 489,
           "label": 1,
           "verified": false,
           "dominant_class": -1,
-          "time": 7.908957396000915
-        },
-        {
-          "sample_idx": 1776,
-          "label": 1,
-          "verified": false,
-          "dominant_class": -1,
-          "time": 7.960636557996622
-        },
-        {
-          "sample_idx": 815,
-          "label": 1,
-          "verified": false,
-          "dominant_class": -1,
-          "time": 9.906047502998263
-        },
-        {
-          "sample_idx": 1837,
-          "label": 1,
-          "verified": false,
-          "dominant_class": -1,
-          "time": 9.039627647995076
-        },
-        {
-          "sample_idx": 818,
-          "label": 1,
-          "verified": false,
-          "dominant_class": -1,
-          "time": 9.098264048996498
-        },
-        {
-          "sample_idx": 173,
-          "label": 1,
-          "verified": false,
-          "dominant_class": -1,
-          "time": 8.383214925001084
+          "time": 8.486607543003629
         }
       ]
     }

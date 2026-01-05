@@ -145,102 +145,169 @@ class PointNetClassifier(nn.Module):
 
 class PointNetForVerification(nn.Module):
     """
-    PointNet for verification using original architecture.
+    PointNet for verification - IDENTICAL to original PointNet architecture.
 
     Based on: Qi et al., "PointNet: Deep Learning on Point Sets" (CVPR 2017)
 
-    This uses the original PointNet architecture with:
-    - T-Net for input transformation (3x3 matrix)
-    - Point-wise MLP with Conv1d (kernel_size=1)
-    - Global max pooling (or mean pooling for CROWN compatibility)
-    - Fully connected classifier
+    This uses the EXACT original PointNet architecture with:
+    - Input T-Net (3x3) with architecture: 3→64→128→1024→512→256→9 + BatchNorm
+    - Feature T-Net (64x64) with architecture: 64→64→128→1024→512→256→4096 + BatchNorm
+    - Point-wise MLP: in_channels→64→64→[feat_transform]→64→128→1024 with BatchNorm
+    - Global max pooling
+    - Classifier MLP: 1024→512→256→classes with BatchNorm + Dropout(0.3)
 
-    Simplified version without feature transform (64x64 T-Net) for verification.
+    Supports feature-augmented input (xyz + geometric features):
+    - in_channels=3: xyz only (original PointNet)
+    - in_channels=7: xyz(3) + features(4) for NSGA3-derived features
+      Features: linearity, curvature, density_var, planarity
+
+    The T-Net for input transform always operates on xyz (3 channels).
+    Additional features are concatenated AFTER the input transform.
     """
 
     def __init__(
         self,
-        num_points: int = 64,
+        num_points: int = 1024,  # Original PointNet uses 1024 points
         num_classes: int = 2,
         use_tnet: bool = True,
-        pooling: str = "max",  # "max" or "mean"
+        feature_transform: bool = True,
+        in_channels: int = 3,  # 3 for xyz, 7 for xyz+features
     ):
         super().__init__()
 
         self.num_points = num_points
         self.num_classes = num_classes
         self.use_tnet = use_tnet
-        self.pooling = pooling
-        self.input_dim = num_points * 3
+        self.feature_transform = feature_transform
+        self.in_channels = in_channels
+        self.input_dim = num_points * in_channels
 
+        # Input T-Net (3x3 transformation) - original architecture
         if use_tnet:
-            # Input T-Net (3x3 transformation matrix)
-            # Architecture from original paper
-            self.tnet_conv1 = nn.Conv1d(3, 64, 1)
-            self.tnet_conv2 = nn.Conv1d(64, 128, 1)
-            self.tnet_conv3 = nn.Conv1d(128, 256, 1)
-            self.tnet_fc1 = nn.Linear(256, 128)
-            self.tnet_fc2 = nn.Linear(128, 64)
-            self.tnet_fc3 = nn.Linear(64, 9)
-            # Initialize to identity
-            self.tnet_fc3.weight.data.zero_()
-            self.tnet_fc3.bias.data.copy_(torch.eye(3).view(-1))
+            self.input_tnet = TNet(k=3)
 
-        # Point-wise MLP (shared weights across points)
-        self.conv1 = nn.Conv1d(3, 64, 1)
-        self.conv2 = nn.Conv1d(64, 128, 1)
-        self.conv3 = nn.Conv1d(128, 256, 1)
+        # Feature T-Net (64x64 transformation)
+        if feature_transform:
+            self.feat_tnet = TNet(k=64)
 
-        # Classifier MLP
-        self.fc1 = nn.Linear(256, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, num_classes)
+        # Point-wise MLP with BatchNorm (original architecture)
+        # Original: 64 → 64 → 64 → 128 → 1024 (5 layers)
+        # First layer takes all channels (xyz + features if present)
+        self.conv1 = nn.Conv1d(in_channels, 64, 1)
+        self.conv2 = nn.Conv1d(64, 64, 1)  # Feature transform applied after this
+        # After feature transform:
+        self.conv3 = nn.Conv1d(64, 64, 1)
+        self.conv4 = nn.Conv1d(64, 128, 1)
+        self.conv5 = nn.Conv1d(128, 1024, 1)
+
+        self.bn1 = nn.BatchNorm1d(64)
+        self.bn2 = nn.BatchNorm1d(64)
+        self.bn3 = nn.BatchNorm1d(64)
+        self.bn4 = nn.BatchNorm1d(128)
+        self.bn5 = nn.BatchNorm1d(1024)
+
+        # Classifier MLP with BatchNorm and Dropout (original architecture)
+        self.fc1 = nn.Linear(1024, 512)
+        self.fc2 = nn.Linear(512, 256)
+        self.fc3 = nn.Linear(256, num_classes)
+
+        self.bn_fc1 = nn.BatchNorm1d(512)
+        self.bn_fc2 = nn.BatchNorm1d(256)
+        self.dropout = nn.Dropout(p=0.3)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         batch_size = x.shape[0]
 
         # Handle flattened input for ONNX compatibility
         if x.dim() == 2:
-            x = x.view(batch_size, self.num_points, 3)
+            x = x.view(batch_size, self.num_points, self.in_channels)
 
-        # Input T-Net: predict 3x3 transformation matrix
+        # Separate xyz and features if using augmented input
+        if self.in_channels > 3:
+            xyz = x[:, :, :3]  # (batch, n_points, 3)
+            extra_features = x[:, :, 3:]  # (batch, n_points, in_channels-3)
+        else:
+            xyz = x
+            extra_features = None
+
+        # Input T-Net: predict 3x3 transformation matrix (only for xyz)
+        input_trans = None
         if self.use_tnet:
             # (batch, n_points, 3) -> (batch, 3, n_points)
-            x_t = x.transpose(1, 2)
-            t = F.relu(self.tnet_conv1(x_t))  # (batch, 64, n_points)
-            t = F.relu(self.tnet_conv2(t))  # (batch, 128, n_points)
-            t = F.relu(self.tnet_conv3(t))  # (batch, 256, n_points)
-            # Global pooling (mean for CROWN, max for original)
-            if self.pooling == "mean":
-                t = torch.mean(t, dim=2)  # (batch, 256) - CROWN compatible
-            else:
-                t = torch.max(t, dim=2)[0]  # (batch, 256)
-            t = F.relu(self.tnet_fc1(t))  # (batch, 128)
-            t = F.relu(self.tnet_fc2(t))  # (batch, 64)
-            t = self.tnet_fc3(t)  # (batch, 9)
-            t = t.view(batch_size, 3, 3)  # (batch, 3, 3)
-            # Apply transformation to input points
-            x = torch.bmm(x, t)  # (batch, n_points, 3)
+            xyz_t = xyz.transpose(1, 2)
+            input_trans = self.input_tnet(xyz_t)  # (batch, 3, 3)
+            # Apply transformation to xyz
+            xyz = torch.bmm(xyz, input_trans)  # (batch, n_points, 3)
 
-        # Point-wise MLP
-        # (batch, n_points, 3) -> (batch, 3, n_points)
-        x = x.transpose(1, 2)
-        x = F.relu(self.conv1(x))  # (batch, 64, n_points)
-        x = F.relu(self.conv2(x))  # (batch, 128, n_points)
-        x = F.relu(self.conv3(x))  # (batch, 256, n_points)
-
-        # Global pooling (symmetric function for permutation invariance)
-        if self.pooling == "mean":
-            x = torch.mean(x, dim=2)  # (batch, 256) - CROWN compatible
+        # Recombine xyz with extra features if present
+        if extra_features is not None:
+            x = torch.cat([xyz, extra_features], dim=2)  # (batch, n_points, in_channels)
         else:
-            x = torch.max(x, dim=2)[0]  # (batch, 256) - original PointNet
+            x = xyz
 
-        # Classifier
-        x = F.relu(self.fc1(x))  # (batch, 128)
-        x = F.relu(self.fc2(x))  # (batch, 64)
+        # Point-wise MLP (shared weights across points)
+        # (batch, n_points, in_channels) -> (batch, in_channels, n_points)
+        x = x.transpose(1, 2)
+        x = F.relu(self.bn1(self.conv1(x)))  # (batch, 64, n_points)
+        x = F.relu(self.bn2(self.conv2(x)))  # (batch, 64, n_points)
+
+        # Feature T-Net (64x64 transformation) - applied after conv2
+        feat_trans = None
+        if self.feature_transform:
+            feat_trans = self.feat_tnet(x)  # (batch, 64, 64)
+            x = x.transpose(1, 2)  # (batch, n_points, 64)
+            x = torch.bmm(x, feat_trans)  # (batch, n_points, 64)
+            x = x.transpose(1, 2)  # (batch, 64, n_points)
+
+        x = F.relu(self.bn3(self.conv3(x)))  # (batch, 64, n_points)
+        x = F.relu(self.bn4(self.conv4(x)))  # (batch, 128, n_points)
+        x = F.relu(self.bn5(self.conv5(x)))  # (batch, 1024, n_points)
+
+        # Global max pooling (symmetric function for permutation invariance)
+        x = torch.max(x, dim=2)[0]  # (batch, 1024)
+
+        # Classifier MLP
+        x = F.relu(self.bn_fc1(self.fc1(x)))  # (batch, 512)
+        x = self.dropout(x)
+        x = F.relu(self.bn_fc2(self.fc2(x)))  # (batch, 256)
+        x = self.dropout(x)
         x = self.fc3(x)  # (batch, num_classes)
 
         return x
+
+    def get_transforms(self, x: torch.Tensor):
+        """Return input and feature transforms for regularization loss."""
+        batch_size = x.shape[0]
+
+        if x.dim() == 2:
+            x = x.view(batch_size, self.num_points, self.in_channels)
+
+        if self.in_channels > 3:
+            xyz = x[:, :, :3]
+        else:
+            xyz = x
+
+        input_trans = None
+        feat_trans = None
+
+        if self.use_tnet:
+            xyz_t = xyz.transpose(1, 2)
+            input_trans = self.input_tnet(xyz_t)
+            xyz = torch.bmm(xyz, input_trans)
+
+        if self.in_channels > 3:
+            x = torch.cat([xyz, x[:, :, 3:]], dim=2)
+        else:
+            x = xyz
+
+        x = x.transpose(1, 2)
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = F.relu(self.bn2(self.conv2(x)))
+
+        if self.feature_transform:
+            feat_trans = self.feat_tnet(x)
+
+        return input_trans, feat_trans
 
 
 class PointNetLarge(nn.Module):

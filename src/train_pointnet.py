@@ -40,6 +40,14 @@ def load_dataset(data_path: Path):
     return train_data, test_data
 
 
+def feature_transform_regularizer(trans):
+    """Regularization loss for feature transform to be close to orthogonal."""
+    d = trans.size()[1]
+    I = torch.eye(d, device=trans.device).unsqueeze(0)
+    loss = torch.mean(torch.norm(I - torch.bmm(trans, trans.transpose(2, 1)), dim=(1, 2)))
+    return loss
+
+
 def train_epoch(model, loader, criterion, optimizer):
     """Train for one epoch."""
     model.train()
@@ -56,18 +64,15 @@ def train_epoch(model, loader, criterion, optimizer):
         # Forward pass
         if isinstance(model, PointNetClassifier):
             outputs, _, feat_trans = model(batch_groups)
-            # Add regularization for feature transform
             loss = criterion(outputs, batch_labels)
             if feat_trans is not None:
-                identity = (
-                    torch.eye(64, device=DEVICE).unsqueeze(0).repeat(batch_groups.size(0), 1, 1)
-                )
-                reg_loss = torch.mean(
-                    torch.norm(
-                        identity - torch.bmm(feat_trans, feat_trans.transpose(1, 2)), dim=(1, 2)
-                    )
-                )
-                loss = loss + 0.001 * reg_loss
+                loss = loss + 0.001 * feature_transform_regularizer(feat_trans)
+        elif isinstance(model, PointNetForVerification) and model.feature_transform:
+            outputs = model(batch_groups)
+            _, feat_trans = model.get_transforms(batch_groups)
+            loss = criterion(outputs, batch_labels)
+            if feat_trans is not None:
+                loss = loss + 0.001 * feature_transform_regularizer(feat_trans)
         else:
             outputs = model(batch_groups)
             loss = criterion(outputs, batch_labels)
@@ -114,13 +119,14 @@ def evaluate(model, loader, criterion):
 def train_pointnet(
     data_path: Path,
     output_path: Path,
-    n_points: int = 512,
+    n_points: int = 1024,  # Original PointNet uses 1024 points
     num_classes: int = 2,
     epochs: int = 50,
     batch_size: int = 64,
     lr: float = 0.001,
     use_tnet: bool = True,
     model_type: str = "verification",
+    in_channels: int = 3,
 ):
     """
     Train PointNet model.
@@ -135,6 +141,7 @@ def train_pointnet(
         lr: Learning rate
         use_tnet: Use T-Net in verification model
         model_type: "verification" (smaller) or "full" (original PointNet)
+        in_channels: Input channels (3=xyz, 7=xyz+features)
     """
     print("=" * 60)
     print("Training PointNet")
@@ -144,6 +151,15 @@ def train_pointnet(
     print("\n1. Loading dataset...")
     train_data, test_data = load_dataset(data_path)
 
+    # Detect in_channels from data
+    sample_shape = train_data[0][0].shape
+    detected_channels = sample_shape[-1] if len(sample_shape) > 1 else 3
+    if detected_channels != in_channels:
+        print(
+            f"   Detected {detected_channels} channels from data, using that instead of {in_channels}"
+        )
+        in_channels = detected_channels
+
     train_loader = DataLoader(
         train_data, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True
     )
@@ -152,7 +168,9 @@ def train_pointnet(
     )
 
     # Create model
-    print(f"\n2. Creating model (type={model_type}, use_tnet={use_tnet})...")
+    print(
+        f"\n2. Creating model (type={model_type}, use_tnet={use_tnet}, in_channels={in_channels})..."
+    )
     if model_type == "full":
         model = PointNetClassifier(
             num_points=n_points,
@@ -170,6 +188,8 @@ def train_pointnet(
             num_points=n_points,
             num_classes=num_classes,
             use_tnet=use_tnet,
+            feature_transform=True,  # Original PointNet architecture
+            in_channels=in_channels,
         )
 
     model = model.to(DEVICE)
@@ -221,6 +241,7 @@ def train_pointnet(
             "num_classes": num_classes,
             "use_tnet": use_tnet,
             "model_type": model_type,
+            "in_channels": in_channels,
             "test_accuracy": best_acc,
         },
         model_path,
@@ -234,13 +255,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=str, default="data/pointnet")
     parser.add_argument("--output", type=str, default="models")
-    parser.add_argument("--n-points", type=int, default=512)
+    parser.add_argument("--n-points", type=int, default=1024)
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--lr", type=float, default=0.001)
     parser.add_argument("--use-tnet", action="store_true", default=True)
     parser.add_argument(
         "--model-type", type=str, default="verification", choices=["verification", "full", "large"]
+    )
+    parser.add_argument(
+        "--in-channels", type=int, default=3, help="Input channels (3=xyz, 7=xyz+features)"
     )
 
     args = parser.parse_args()
@@ -254,4 +278,5 @@ if __name__ == "__main__":
         lr=args.lr,
         use_tnet=args.use_tnet,
         model_type=args.model_type,
+        in_channels=args.in_channels,
     )

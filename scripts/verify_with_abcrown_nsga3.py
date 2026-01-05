@@ -1,16 +1,27 @@
 #!/usr/bin/env python3
 """
-Complete α,β-CROWN Verification for PointNet with NSGA3 Support.
+Complete α,β-CROWN Verification for PointNet with NSGA3 Dynamic Weights.
 
-This script:
-1. Loads PointNet model (trained with NSGA3 weights or standard)
-2. Exports to ONNX format compatible with α,β-CROWN
-3. Generates VNN-LIB specifications for verification
-4. Runs α,β-CROWN via CLI
-5. Parses and displays verification results
+This script connects neural network verification to adversarial attack optimization:
+
+1. **NSGA3 Attack Optimization** (from mola-adversarial-nsga3 project):
+   - Multi-objective genetic algorithm finds Pareto-optimal adversarial attacks
+   - Each genome defines attack parameters (noise, geometric distortion, etc.)
+   - Results: 26 Pareto-optimal solutions balancing ATE vs perturbation magnitude
+
+2. **Dynamic Vulnerability Labeling**:
+   - Instead of static labels, compute vulnerability from NSGA3 Pareto set
+   - High vulnerability = CRITICAL (regions that optimal attacks can exploit)
+   - Low vulnerability = NON_CRITICAL (regions robust to optimal attacks)
+
+3. **Formal Verification**:
+   - Verify robustness: pred(x+δ) == pred(x) for all perturbations within ε
+   - Verify safety: CRITICAL regions never become NON_CRITICAL under perturbations
+
+This creates a complete loop: attack optimization → vulnerability assessment → verification
 
 Usage:
-    python scripts/verify_with_abcrown_nsga3.py [--model MODEL_PATH] [--epsilon EPSILON] [--n-samples N]
+    python scripts/verify_with_abcrown_nsga3.py [--model MODEL_PATH] [--epsilon EPSILON] [--n-samples N] [--use-nsga3]
 """
 
 import sys
@@ -18,7 +29,7 @@ import os
 import argparse
 import subprocess
 from pathlib import Path
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 import json
 from datetime import datetime
 
@@ -34,6 +45,19 @@ sys.path.insert(0, str(BASE_DIR / "3dcertify"))
 
 from src.pointnet_model import PointNetForVerification
 from pointnet.model import PointNet as PointNet3DCertify
+
+# Import NSGA3 integration
+try:
+    from src.nsga3_integration import (
+        load_pareto_set,
+        compute_vulnerability_label,
+        compute_max_vulnerability,
+        get_pareto_front_summary
+    )
+    NSGA3_AVAILABLE = True
+except ImportError:
+    NSGA3_AVAILABLE = False
+    print("⚠ Warning: NSGA3 integration not available")
 
 
 class PointNetFlatInputWrapper(nn.Module):
@@ -363,19 +387,28 @@ def verify_samples(
     n_samples: int,
     output_dir: Path,
     device: str = "cuda",
-    property_type: str = "robustness"
+    property_type: str = "robustness",
+    use_nsga3_labels: bool = False,
+    nsga3_results_dir: Optional[Path] = None,
+    nsga3_run_id: int = 10,
+    vulnerability_threshold: float = 0.5
 ) -> Dict:
     """
-    Main verification loop.
+    Main verification loop with optional NSGA3 dynamic labeling.
 
     Args:
         model_path: Path to trained .pth model
         data_path: Path to test data .npy
-        labels_path: Path to labels .npy
+        labels_path: Path to labels .npy (used if use_nsga3_labels=False)
         epsilons: List of epsilon values to test
         n_samples: Number of samples to verify
         output_dir: Where to save results
         device: 'cuda' or 'cpu'
+        property_type: 'robustness' or 'safety'
+        use_nsga3_labels: If True, compute labels from NSGA3 Pareto set
+        nsga3_results_dir: Path to NSGA3 results directory
+        nsga3_run_id: NSGA3 run ID to load
+        vulnerability_threshold: Threshold for CRITICAL vs NON_CRITICAL
 
     Returns:
         Dictionary with all results
@@ -385,6 +418,41 @@ def verify_samples(
     print("="*70)
     print(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
+
+    # Load NSGA3 Pareto set if requested
+    pareto_set = None
+    if use_nsga3_labels:
+        if not NSGA3_AVAILABLE:
+            print("⚠ ERROR: NSGA3 integration not available!")
+            print("  Install dependencies or set --use-nsga3=False")
+            return {'error': 'NSGA3 not available'}
+
+        if nsga3_results_dir is None:
+            # Default to mola-adversarial-nsga3 project
+            nsga3_results_dir = Path("/home/francesca/mola-adversarial-nsga3/src/results/runs")
+
+        print("Loading NSGA3 Pareto set...")
+        print(f"  Directory: {nsga3_results_dir}")
+        print(f"  Run ID: {nsga3_run_id}")
+
+        pareto_set = load_pareto_set(nsga3_results_dir, run_id=nsga3_run_id)
+
+        if pareto_set is None:
+            print("  ⚠ ERROR: Could not load NSGA3 Pareto set!")
+            return {'error': 'NSGA3 Pareto set not found'}
+
+        print(f"  ✓ Loaded Pareto set: {pareto_set.shape}")
+
+        # Show Pareto front summary
+        summary = get_pareto_front_summary(nsga3_results_dir, run_id=nsga3_run_id)
+        print(f"  Pareto solutions: {summary.get('n_solutions', 'N/A')}")
+        print(f"  ATE range: {summary.get('min_ate_cm', 0):.1f} - {summary.get('best_ate_cm', 0):.1f} cm")
+        print(f"  Perturbation range: {summary.get('min_perturbation_cm', 0):.2f} - {summary.get('max_perturbation_cm', 0):.2f} cm")
+        print(f"  Vulnerability threshold: {vulnerability_threshold}")
+        print()
+    else:
+        print("Using static labels from test_labels.npy")
+        print()
 
     # Load model
     print("Loading model...")
@@ -463,7 +531,6 @@ def verify_samples(
     # Load test data
     print("Loading test data...")
     test_data = np.load(data_path)
-    test_labels = np.load(labels_path)
 
     # Subsample to num_points if needed
     if test_data.shape[1] != num_points:
@@ -475,7 +542,22 @@ def verify_samples(
         test_data = test_data[:, :, :3]
 
     print(f"  Test data shape: {test_data.shape}")
-    print(f"  Labels shape: {test_labels.shape}")
+
+    # Compute labels (static or dynamic)
+    if use_nsga3_labels:
+        print("Computing dynamic labels from NSGA3 Pareto set...")
+        test_labels = np.array([
+            compute_vulnerability_label(sample, pareto_set, threshold=vulnerability_threshold)
+            for sample in test_data
+        ])
+        critical_count = np.sum(test_labels == 0)
+        print(f"  ✓ Computed labels: {len(test_labels)} samples")
+        print(f"     CRITICAL (0): {critical_count} ({100*critical_count/len(test_labels):.1f}%)")
+        print(f"     NON_CRITICAL (1): {len(test_labels)-critical_count} ({100*(len(test_labels)-critical_count)/len(test_labels):.1f}%)")
+    else:
+        test_labels = np.load(labels_path)
+        print(f"  Labels shape: {test_labels.shape}")
+
     print(f"  Samples to verify: {n_samples}")
     print()
 
@@ -650,6 +732,29 @@ def main():
         choices=['robustness', 'safety', 'both'],
         help='Verification property: robustness (pred stable), safety (CRITICAL stays CRITICAL), or both'
     )
+    parser.add_argument(
+        '--use-nsga3',
+        action='store_true',
+        help='Use NSGA3 dynamic labels instead of static labels from test_labels.npy'
+    )
+    parser.add_argument(
+        '--nsga3-dir',
+        type=Path,
+        default=None,
+        help='Path to NSGA3 results directory (default: /home/francesca/mola-adversarial-nsga3/src/results/runs)'
+    )
+    parser.add_argument(
+        '--nsga3-run-id',
+        type=int,
+        default=10,
+        help='NSGA3 run ID to load (default: 10)'
+    )
+    parser.add_argument(
+        '--vulnerability-threshold',
+        type=float,
+        default=0.5,
+        help='Vulnerability threshold for CRITICAL vs NON_CRITICAL (default: 0.5)'
+    )
 
     args = parser.parse_args()
 
@@ -669,7 +774,11 @@ def main():
             n_samples=args.n_samples,
             output_dir=args.output / 'robustness',
             device=args.device,
-            property_type='robustness'
+            property_type='robustness',
+            use_nsga3_labels=args.use_nsga3,
+            nsga3_results_dir=args.nsga3_dir,
+            nsga3_run_id=args.nsga3_run_id,
+            vulnerability_threshold=args.vulnerability_threshold
         )
 
         # Run safety
@@ -682,7 +791,11 @@ def main():
             n_samples=args.n_samples,
             output_dir=args.output / 'safety',
             device=args.device,
-            property_type='safety'
+            property_type='safety',
+            use_nsga3_labels=args.use_nsga3,
+            nsga3_results_dir=args.nsga3_dir,
+            nsga3_run_id=args.nsga3_run_id,
+            vulnerability_threshold=args.vulnerability_threshold
         )
 
         # Save combined results
@@ -705,7 +818,11 @@ def main():
             n_samples=args.n_samples,
             output_dir=args.output,
             device=args.device,
-            property_type=args.property
+            property_type=args.property,
+            use_nsga3_labels=args.use_nsga3,
+            nsga3_results_dir=args.nsga3_dir,
+            nsga3_run_id=args.nsga3_run_id,
+            vulnerability_threshold=args.vulnerability_threshold
         )
 
         # Save results

@@ -14,7 +14,7 @@ from pointnet_model import PointNetForVerification
 def export_pointnet_onnx(
     model_path: Path,
     output_path: Path,
-    n_points: int = 512,
+    n_points: int = 1024,  # Original PointNet uses 1024 points
 ):
     """
     Export PointNet to ONNX.
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="models/pointnet.pth")
     parser.add_argument("--output", type=str, default="models/pointnet.onnx")
-    parser.add_argument("--n-points", type=int, default=512)
+    parser.add_argument("--n-points", type=int, default=1024)
 
     args = parser.parse_args()
 

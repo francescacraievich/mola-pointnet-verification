@@ -22,7 +22,7 @@ general:
 
 model:
   onnx_path: /home/francesca/mola-pointnet-verification/models/pointnet_mean_for_abcrown.onnx
-  input_shape: [-1, 512, 3]       # Batch, points, features
+  input_shape: [-1, 1024, 7]      # Batch, points (original), features (xyz+4)
   cache_onnx_conversion: false
   flatten_final_output: false
 

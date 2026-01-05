@@ -2,7 +2,10 @@
 venv/
 .venv/
 
-# Data files (too large for GitHub without LFS)
+
+
+
+# Data files 
 data/processed/
 # Note: *.npy files tracked with Git LFS
 *.npy
@@ -10,7 +13,7 @@ data/processed/
 !data/raw/*.npy
 !runs/*.npy
 
-# Model weights (can be regenerated)
+# Model weights (
 models/*.pth
 models/*.onnx
 
@@ -44,5 +47,13 @@ specs/
 .ruff_cache/
 .mypy_cache/
 alpha-beta-CROWN/
-data/__MACOSX/bathtub/test/*
-data/ModelNet10/bathtub/*
+appunti/
+
+# External verifiers (cloned repos)
+ERAN/
+alpha-beta-CROWN/
+3dcertify/
+venv38/
+
+# Large binary files
+*.tar.gz

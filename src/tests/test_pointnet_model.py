@@ -94,66 +94,117 @@ class TestPointNetClassifier:
 
     def test_classifier_binary(self):
         """Test binary classification."""
-        model = PointNetClassifier(num_points=512, num_classes=2)
-        x = torch.randn(8, 512, 3)
+        model = PointNetClassifier(num_points=1024, num_classes=2)
+        x = torch.randn(8, 1024, 3)
         logits, _, _ = model(x)
         assert logits.shape == (8, 2)
 
 
 class TestPointNetForVerification:
-    """Tests for verification-optimized PointNet."""
+    """Tests for verification-optimized PointNet (identical to original architecture)."""
 
     def test_verification_model_output_shape(self):
         """Test verification model produces correct output shape."""
-        model = PointNetForVerification(num_points=512, num_classes=2, use_tnet=True)
-        x = torch.randn(4, 512, 3)
+        model = PointNetForVerification(num_points=1024, num_classes=2, use_tnet=True)
+        x = torch.randn(4, 1024, 3)
         out = model(x)
         assert out.shape == (4, 2)
 
     def test_verification_model_no_tnet(self):
         """Test verification model without T-Net."""
-        model = PointNetForVerification(num_points=512, num_classes=2, use_tnet=False)
-        x = torch.randn(4, 512, 3)
+        model = PointNetForVerification(
+            num_points=1024, num_classes=2, use_tnet=False, feature_transform=False
+        )
+        x = torch.randn(4, 1024, 3)
         out = model(x)
         assert out.shape == (4, 2)
 
     def test_verification_model_flattened_input(self):
         """Test verification model with flattened input."""
-        model = PointNetForVerification(num_points=512, num_classes=2)
-        x = torch.randn(4, 512 * 3)  # Flattened
+        model = PointNetForVerification(num_points=1024, num_classes=2)
+        x = torch.randn(4, 1024 * 3)  # Flattened
         out = model(x)
         assert out.shape == (4, 2)
 
-    def test_verification_model_mean_pooling(self):
-        """Test verification model with mean pooling."""
-        model = PointNetForVerification(num_points=512, num_classes=2, pooling="mean")
-        x = torch.randn(4, 512, 3)
+    def test_verification_model_with_feature_transform(self):
+        """Test verification model with feature transform (64x64 T-Net)."""
+        model = PointNetForVerification(
+            num_points=1024, num_classes=2, use_tnet=True, feature_transform=True
+        )
+        x = torch.randn(4, 1024, 3)
         out = model(x)
         assert out.shape == (4, 2)
 
-    def test_verification_model_max_pooling(self):
-        """Test verification model with max pooling."""
-        model = PointNetForVerification(num_points=512, num_classes=2, pooling="max")
-        x = torch.randn(4, 512, 3)
+    def test_verification_model_without_feature_transform(self):
+        """Test verification model without feature transform."""
+        model = PointNetForVerification(
+            num_points=1024, num_classes=2, use_tnet=True, feature_transform=False
+        )
+        x = torch.randn(4, 1024, 3)
         out = model(x)
         assert out.shape == (4, 2)
 
     def test_verification_model_parameter_count(self):
-        """Test verification model has expected parameter count."""
-        model = PointNetForVerification(num_points=512, num_classes=2, use_tnet=True)
+        """Test verification model has expected parameter count (original architecture)."""
+        model = PointNetForVerification(
+            num_points=1024, num_classes=2, use_tnet=True, feature_transform=True
+        )
         n_params = sum(p.numel() for p in model.parameters())
-        # Should be around 166k parameters
-        assert 100_000 < n_params < 300_000
+        # Original PointNet with feature transform has ~3.5M parameters
+        assert 3_000_000 < n_params < 4_000_000
 
     def test_verification_model_gradient_flow(self):
         """Test gradient flows through the model."""
-        model = PointNetForVerification(num_points=512, num_classes=2)
-        x = torch.randn(4, 512, 3, requires_grad=True)
+        model = PointNetForVerification(num_points=1024, num_classes=2)
+        x = torch.randn(4, 1024, 3, requires_grad=True)
         out = model(x)
         loss = out.sum()
         loss.backward()
         assert x.grad is not None
         assert x.grad.shape == x.shape
+
+    def test_verification_model_7_channels(self):
+        """Test verification model with 7 input channels (xyz + features)."""
+        model = PointNetForVerification(num_points=1024, num_classes=2, in_channels=7)
+        x = torch.randn(4, 1024, 7)  # xyz(3) + features(4)
+        out = model(x)
+        assert out.shape == (4, 2)
+
+    def test_verification_model_7_channels_flattened(self):
+        """Test verification model with 7 channels flattened input."""
+        model = PointNetForVerification(num_points=1024, num_classes=2, in_channels=7)
+        x = torch.randn(4, 1024 * 7)  # Flattened
+        out = model(x)
+        assert out.shape == (4, 2)
+
+    def test_verification_model_7_channels_with_tnet(self):
+        """Test T-Net only transforms xyz, not features."""
+        model = PointNetForVerification(
+            num_points=1024, num_classes=2, in_channels=7, use_tnet=True
+        )
+        x = torch.randn(4, 1024, 7)
+        out = model(x)
+        assert out.shape == (4, 2)
+
+    def test_get_transforms(self):
+        """Test get_transforms returns correct transform matrices."""
+        model = PointNetForVerification(
+            num_points=1024, num_classes=2, use_tnet=True, feature_transform=True
+        )
+        x = torch.randn(4, 1024, 3)
+        input_trans, feat_trans = model.get_transforms(x)
+        assert input_trans.shape == (4, 3, 3)
+        assert feat_trans.shape == (4, 64, 64)
+
+    def test_get_transforms_7_channels(self):
+        """Test get_transforms with 7 channels (T-Net only on xyz)."""
+        model = PointNetForVerification(
+            num_points=1024, num_classes=2, in_channels=7, use_tnet=True, feature_transform=True
+        )
+        x = torch.randn(4, 1024, 7)
+        input_trans, feat_trans = model.get_transforms(x)
+        assert input_trans.shape == (4, 3, 3)  # Still 3x3 (xyz only)
+        assert feat_trans.shape == (4, 64, 64)
 
 
 class TestPointNetLarge:
@@ -161,15 +212,15 @@ class TestPointNetLarge:
 
     def test_large_model_output_shape(self):
         """Test large model produces correct output shape."""
-        model = PointNetLarge(num_points=512, num_classes=2)
-        x = torch.randn(4, 512, 3)
+        model = PointNetLarge(num_points=1024, num_classes=2)
+        x = torch.randn(4, 1024, 3)
         out = model(x)
         assert out.shape == (4, 2)
 
     def test_large_model_more_parameters(self):
         """Test large model has more parameters than base."""
-        base_model = PointNetForVerification(num_points=512, num_classes=2)
-        large_model = PointNetLarge(num_points=512, num_classes=2)
+        base_model = PointNetForVerification(num_points=1024, num_classes=2)
+        large_model = PointNetLarge(num_points=1024, num_classes=2)
 
         base_params = sum(p.numel() for p in base_model.parameters())
         large_params = sum(p.numel() for p in large_model.parameters())
@@ -178,8 +229,8 @@ class TestPointNetLarge:
 
     def test_large_model_flattened_input(self):
         """Test large model with flattened input."""
-        model = PointNetLarge(num_points=512, num_classes=2)
-        x = torch.randn(2, 512 * 3)
+        model = PointNetLarge(num_points=1024, num_classes=2)
+        x = torch.randn(2, 1024 * 3)
         out = model(x)
         assert out.shape == (2, 2)
 
@@ -189,10 +240,10 @@ class TestModelInference:
 
     def test_eval_mode_deterministic(self):
         """Test model produces same output in eval mode."""
-        model = PointNetForVerification(num_points=512, num_classes=2)
+        model = PointNetForVerification(num_points=1024, num_classes=2)
         model.eval()
 
-        x = torch.randn(2, 512, 3)
+        x = torch.randn(2, 1024, 3)
         with torch.no_grad():
             out1 = model(x)
             out2 = model(x)
@@ -201,16 +252,16 @@ class TestModelInference:
 
     def test_batch_size_one(self):
         """Test model works with batch size 1."""
-        model = PointNetForVerification(num_points=512, num_classes=2)
-        x = torch.randn(1, 512, 3)
+        model = PointNetForVerification(num_points=1024, num_classes=2)
+        x = torch.randn(1, 1024, 3)
         out = model(x)
         assert out.shape == (1, 2)
 
     def test_different_num_classes(self):
         """Test model with different number of classes."""
         for n_classes in [2, 5, 10]:
-            model = PointNetForVerification(num_points=512, num_classes=n_classes)
-            x = torch.randn(4, 512, 3)
+            model = PointNetForVerification(num_points=1024, num_classes=n_classes)
+            x = torch.randn(4, 1024, 3)
             out = model(x)
             assert out.shape == (4, n_classes)
 
