@@ -1,0 +1,689 @@
+{
+  "model_path": "models/pointnet_3dcertify_64p.pth",
+  "verifier": "ERAN",
+  "domain": "deepzono",
+  "architecture": "improved_max (cascading MaxPools)",
+  "method": "Python API (not CLI)",
+  "results": {
+    "0.001": {
+      "epsilon": 0.001,
+      "verified_count": 18,
+      "total_tested": 18,
+      "verification_rate": 100.0,
+      "avg_time": 7.178577015778703,
+      "total_time": 129.21438628401665,
+      "samples": [
+        {
+          "sample_idx": 1021,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 8.22240788700583
+        },
+        {
+          "sample_idx": 1463,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 9.570366063999245
+        },
+        {
+          "sample_idx": 1468,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 7.681191796000348
+        },
+        {
+          "sample_idx": 1284,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 6.967666466996889
+        },
+        {
+          "sample_idx": 834,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 5.7476062340065255
+        },
+        {
+          "sample_idx": 1328,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 6.524932633998105
+        },
+        {
+          "sample_idx": 1229,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 9.065667720999045
+        },
+        {
+          "sample_idx": 1002,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 7.209204857004806
+        },
+        {
+          "sample_idx": 279,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 6.917619455998647
+        },
+        {
+          "sample_idx": 341,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 8.762888721001218
+        },
+        {
+          "sample_idx": 15,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 6.692720256003668
+        },
+        {
+          "sample_idx": 116,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 5.908327008000924
+        },
+        {
+          "sample_idx": 1370,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 5.777902908994292
+        },
+        {
+          "sample_idx": 1776,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 5.561204513003759
+        },
+        {
+          "sample_idx": 815,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 7.906443919004232
+        },
+        {
+          "sample_idx": 1837,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 6.666237352997996
+        },
+        {
+          "sample_idx": 818,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 7.2725174040024285
+        },
+        {
+          "sample_idx": 173,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 6.759481084998697
+        }
+      ]
+    },
+    "0.003": {
+      "epsilon": 0.003,
+      "verified_count": 18,
+      "total_tested": 18,
+      "verification_rate": 100.0,
+      "avg_time": 9.607656084611033,
+      "total_time": 172.93780952299858,
+      "samples": [
+        {
+          "sample_idx": 1021,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 10.009479633998126
+        },
+        {
+          "sample_idx": 1463,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 8.19900479199714
+        },
+        {
+          "sample_idx": 1468,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 8.861311910994118
+        },
+        {
+          "sample_idx": 1284,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 7.792267978999007
+        },
+        {
+          "sample_idx": 834,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 7.9335177059983835
+        },
+        {
+          "sample_idx": 1328,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 11.330583605995344
+        },
+        {
+          "sample_idx": 1229,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 12.09037285100203
+        },
+        {
+          "sample_idx": 1002,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 9.411951071000658
+        },
+        {
+          "sample_idx": 279,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 11.158390508004231
+        },
+        {
+          "sample_idx": 341,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 11.029761243000394
+        },
+        {
+          "sample_idx": 15,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 8.445290732001013
+        },
+        {
+          "sample_idx": 116,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 9.168830754999362
+        },
+        {
+          "sample_idx": 1370,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 10.496726184006548
+        },
+        {
+          "sample_idx": 1776,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 11.096468847004871
+        },
+        {
+          "sample_idx": 815,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 10.19061750399851
+        },
+        {
+          "sample_idx": 1837,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 8.711056120999274
+        },
+        {
+          "sample_idx": 818,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 8.696261242999753
+        },
+        {
+          "sample_idx": 173,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 8.315916835999815
+        }
+      ]
+    },
+    "0.005": {
+      "epsilon": 0.005,
+      "verified_count": 15,
+      "total_tested": 18,
+      "verification_rate": 83.33333333333334,
+      "avg_time": 10.752706341554585,
+      "total_time": 193.54871414798254,
+      "samples": [
+        {
+          "sample_idx": 1021,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 9.336824678000994
+        },
+        {
+          "sample_idx": 1463,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 10.366983236999658
+        },
+        {
+          "sample_idx": 1468,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 10.154352147997997
+        },
+        {
+          "sample_idx": 1284,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 10.4930524779993
+        },
+        {
+          "sample_idx": 834,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 12.996705136996752
+        },
+        {
+          "sample_idx": 1328,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 12.594908671002486
+        },
+        {
+          "sample_idx": 1229,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 12.600977827998577
+        },
+        {
+          "sample_idx": 1002,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 12.5787519910009
+        },
+        {
+          "sample_idx": 279,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 11.347335079000914
+        },
+        {
+          "sample_idx": 341,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 10.522087573997851
+        },
+        {
+          "sample_idx": 15,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 9.826158034993568
+        },
+        {
+          "sample_idx": 116,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 9.951993071998004
+        },
+        {
+          "sample_idx": 1370,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 9.863852575996134
+        },
+        {
+          "sample_idx": 1776,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 9.444575173001795
+        },
+        {
+          "sample_idx": 815,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 10.699070975999348
+        },
+        {
+          "sample_idx": 1837,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 10.128057201000047
+        },
+        {
+          "sample_idx": 818,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 11.25233699400269
+        },
+        {
+          "sample_idx": 173,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 9.390691299995524
+        }
+      ]
+    },
+    "0.007": {
+      "epsilon": 0.007,
+      "verified_count": 10,
+      "total_tested": 18,
+      "verification_rate": 55.55555555555556,
+      "avg_time": 10.074368224444497,
+      "total_time": 181.3386280400009,
+      "samples": [
+        {
+          "sample_idx": 1021,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 12.479924099003256
+        },
+        {
+          "sample_idx": 1463,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 16.544666685003904
+        },
+        {
+          "sample_idx": 1468,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 13.5477263089997
+        },
+        {
+          "sample_idx": 1284,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 12.132750509998004
+        },
+        {
+          "sample_idx": 834,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 10.659360026998911
+        },
+        {
+          "sample_idx": 1328,
+          "label": 0,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 16.371931994995975
+        },
+        {
+          "sample_idx": 1229,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 10.000149257000885
+        },
+        {
+          "sample_idx": 1002,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 12.235657678997086
+        },
+        {
+          "sample_idx": 279,
+          "label": 0,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 8.715199540005415
+        },
+        {
+          "sample_idx": 341,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 8.107597371003067
+        },
+        {
+          "sample_idx": 15,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 7.5847571449994575
+        },
+        {
+          "sample_idx": 116,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.143159814004321
+        },
+        {
+          "sample_idx": 1370,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.412672193997423
+        },
+        {
+          "sample_idx": 1776,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 8.46231968900247
+        },
+        {
+          "sample_idx": 815,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.5639575959939975
+        },
+        {
+          "sample_idx": 1837,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.513771300000371
+        },
+        {
+          "sample_idx": 818,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 7.513645375001943
+        },
+        {
+          "sample_idx": 173,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.349381454994727
+        }
+      ]
+    },
+    "0.01": {
+      "epsilon": 0.01,
+      "verified_count": 0,
+      "total_tested": 18,
+      "verification_rate": 0.0,
+      "avg_time": 8.188612675721542,
+      "total_time": 147.39502816298773,
+      "samples": [
+        {
+          "sample_idx": 1021,
+          "label": 0,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 8.006492674998299
+        },
+        {
+          "sample_idx": 1463,
+          "label": 0,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.373017097001139
+        },
+        {
+          "sample_idx": 1468,
+          "label": 0,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.481468063000648
+        },
+        {
+          "sample_idx": 1284,
+          "label": 0,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 8.145617954003683
+        },
+        {
+          "sample_idx": 834,
+          "label": 0,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 6.793427500997495
+        },
+        {
+          "sample_idx": 1328,
+          "label": 0,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 9.198136516999512
+        },
+        {
+          "sample_idx": 1229,
+          "label": 0,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.758616441999038
+        },
+        {
+          "sample_idx": 1002,
+          "label": 0,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.374977202001901
+        },
+        {
+          "sample_idx": 279,
+          "label": 0,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.357379674002004
+        },
+        {
+          "sample_idx": 341,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 8.774690624995856
+        },
+        {
+          "sample_idx": 15,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 9.235796872999344
+        },
+        {
+          "sample_idx": 116,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.598659461000352
+        },
+        {
+          "sample_idx": 1370,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.908957396000915
+        },
+        {
+          "sample_idx": 1776,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.960636557996622
+        },
+        {
+          "sample_idx": 815,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 9.906047502998263
+        },
+        {
+          "sample_idx": 1837,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 9.039627647995076
+        },
+        {
+          "sample_idx": 818,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 9.098264048996498
+        },
+        {
+          "sample_idx": 173,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 8.383214925001084
+        }
+      ]
+    }
+  }
+}
