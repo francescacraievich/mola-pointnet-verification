@@ -64,10 +64,16 @@ def create_vnnlib_spec(
     label: int,
     epsilon: float,
     output_path: Path,
-    num_classes: int = 2
+    num_classes: int = 2,
+    property_type: str = 'robustness'
 ) -> None:
     """
-    Generate VNN-LIB specification for robustness verification.
+    Generate VNN-LIB specification for verification.
+
+    Args:
+        property_type: 'robustness' or 'safety'
+            - 'robustness': Verify pred(x+δ) == pred(x) for all perturbations
+            - 'safety': Verify CRITICAL samples never become NON_CRITICAL
 
     Args:
         sample: Flattened input (n_points * 3,)
@@ -98,27 +104,47 @@ def create_vnnlib_spec(
 
         f.write("\n; Output constraints\n")
 
-        # Robustness property: true label should have highest score
-        # For verification to fail, there must exist another class with score >= true class
-        # So we assert the NEGATION: exists other_label where Y_label <= Y_other_label
-        # α,β-CROWN will try to prove this is unsat (i.e., property is verified)
+        if property_type == 'robustness':
+            # Robustness property: true label should have highest score
+            # For verification to fail, there must exist another class with score >= true class
+            # So we assert the NEGATION: exists other_label where Y_label <= Y_other_label
+            # α,β-CROWN will try to prove this is unsat (i.e., property is verified)
+            f.write("; Robustness: pred(x+δ) == pred(x)\n")
 
-        # Collect constraints
-        constraints = []
-        for other_label in range(num_classes):
-            if other_label != label:
-                constraints.append(f"(<= Y_{label} Y_{other_label})")
+            # Collect constraints
+            constraints = []
+            for other_label in range(num_classes):
+                if other_label != label:
+                    constraints.append(f"(<= Y_{label} Y_{other_label})")
 
-        # Write constraint(s)
-        if len(constraints) == 1:
-            # Single constraint: no 'or' needed
-            f.write(f"(assert {constraints[0]})\n")
-        else:
-            # Multiple constraints: use 'or'
-            f.write("(assert (or\n")
-            for constraint in constraints:
-                f.write(f"    {constraint}\n")
-            f.write("))\n")
+            # Write constraint(s)
+            if len(constraints) == 1:
+                # Single constraint: no 'or' needed
+                f.write(f"(assert {constraints[0]})\n")
+            else:
+                # Multiple constraints: use 'or'
+                f.write("(assert (or\n")
+                for constraint in constraints:
+                    f.write(f"    {constraint}\n")
+                f.write("))\n")
+
+        elif property_type == 'safety':
+            # Safety property: CRITICAL samples must NOT become NON_CRITICAL
+            # Only applies to label=0 (CRITICAL)
+            # Property: Y_0 >= Y_1 (CRITICAL score must stay >= NON_CRITICAL score)
+            # We assert the NEGATION: Y_0 < Y_1, i.e., (<= Y_0 Y_1)
+            f.write("; Safety: CRITICAL never becomes NON_CRITICAL\n")
+
+            if label == 0:  # CRITICAL
+                # Assert: Y_CRITICAL < Y_NON_CRITICAL (negation of safety)
+                f.write(f"(assert (< Y_0 Y_1))\n")
+            else:  # NON_CRITICAL
+                # For NON_CRITICAL, we can either:
+                # 1. Skip (property doesn't apply)
+                # 2. Check it doesn't become CRITICAL (optional)
+                # For now, we check robustness for NON_CRITICAL too
+                f.write("; NON_CRITICAL: check robustness\n")
+                f.write(f"(assert (<= Y_1 Y_0))\n")
 
 
 def export_model_to_onnx(
@@ -336,7 +362,8 @@ def verify_samples(
     epsilons: List[float],
     n_samples: int,
     output_dir: Path,
-    device: str = "cuda"
+    device: str = "cuda",
+    property_type: str = "robustness"
 ) -> Dict:
     """
     Main verification loop.
@@ -497,8 +524,8 @@ def verify_samples(
                 continue
 
             # Generate VNN-LIB spec
-            spec_path = specs_dir / f"sample_{sample_idx}_eps{eps}.vnnlib"
-            create_vnnlib_spec(sample_flat, label, eps, spec_path, num_classes=2)
+            spec_path = specs_dir / f"sample_{sample_idx}_eps{eps}_{property_type}.vnnlib"
+            create_vnnlib_spec(sample_flat, label, eps, spec_path, num_classes=2, property_type=property_type)
 
             # Generate config
             config_path = configs_dir / f"config_{sample_idx}_eps{eps}.yaml"
@@ -616,29 +643,81 @@ def main():
         choices=['cuda', 'cpu'],
         help='Device to use'
     )
+    parser.add_argument(
+        '--property',
+        type=str,
+        default='robustness',
+        choices=['robustness', 'safety', 'both'],
+        help='Verification property: robustness (pred stable), safety (CRITICAL stays CRITICAL), or both'
+    )
 
     args = parser.parse_args()
 
-    # Run verification
-    results = verify_samples(
-        model_path=args.model,
-        data_path=args.data,
-        labels_path=args.labels,
-        epsilons=args.epsilon,
-        n_samples=args.n_samples,
-        output_dir=args.output,
-        device=args.device
-    )
+    # Run verification based on property type
+    if args.property == 'both':
+        print("\n" + "="*70)
+        print("Running BOTH Robustness and Safety Verification")
+        print("="*70)
 
-    # Save results
-    results_json = args.output / 'verification_results.json'
-    with open(results_json, 'w') as f:
-        json.dump({
-            'timestamp': datetime.now().isoformat(),
-            'model': str(args.model),
-            'method': 'alpha-beta-CROWN',
-            'results': results
-        }, f, indent=2)
+        # Run robustness
+        print("\n### PART 1: ROBUSTNESS VERIFICATION ###\n")
+        robustness_results = verify_samples(
+            model_path=args.model,
+            data_path=args.data,
+            labels_path=args.labels,
+            epsilons=args.epsilon,
+            n_samples=args.n_samples,
+            output_dir=args.output / 'robustness',
+            device=args.device,
+            property_type='robustness'
+        )
+
+        # Run safety
+        print("\n### PART 2: SAFETY VERIFICATION ###\n")
+        safety_results = verify_samples(
+            model_path=args.model,
+            data_path=args.data,
+            labels_path=args.labels,
+            epsilons=args.epsilon,
+            n_samples=args.n_samples,
+            output_dir=args.output / 'safety',
+            device=args.device,
+            property_type='safety'
+        )
+
+        # Save combined results
+        results_json = args.output / 'verification_results_both.json'
+        with open(results_json, 'w') as f:
+            json.dump({
+                'timestamp': datetime.now().isoformat(),
+                'model': str(args.model),
+                'method': 'alpha-beta-CROWN',
+                'robustness': robustness_results,
+                'safety': safety_results
+            }, f, indent=2)
+    else:
+        # Run single property
+        results = verify_samples(
+            model_path=args.model,
+            data_path=args.data,
+            labels_path=args.labels,
+            epsilons=args.epsilon,
+            n_samples=args.n_samples,
+            output_dir=args.output,
+            device=args.device,
+            property_type=args.property
+        )
+
+        # Save results
+        results_json = args.output / f'verification_results_{args.property}.json'
+        with open(results_json, 'w') as f:
+            json.dump({
+                'timestamp': datetime.now().isoformat(),
+                'model': str(args.model),
+                'method': 'alpha-beta-CROWN',
+                'property': args.property,
+                'results': results
+            }, f, indent=2)
 
     print(f"\n✓ Results saved to: {results_json}")
 
