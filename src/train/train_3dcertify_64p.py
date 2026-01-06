@@ -5,8 +5,11 @@ This matches the model used in 3DCertify paper experiments.
 """
 
 import sys
-sys.path.insert(0, '.')
-sys.path.insert(0, '3dcertify')
+from pathlib import Path
+
+BASE_DIR = Path(__file__).parent.parent.parent  # mola-pointnet-verification/
+sys.path.insert(0, str(BASE_DIR))
+sys.path.insert(0, str(BASE_DIR / '3dcertify'))
 
 import torch
 import torch.nn as nn
@@ -35,10 +38,10 @@ print()
 
 # Load data
 print("Loading MOLA data...")
-train_groups = np.load('data/pointnet/train_groups.npy')  # (10000, 1024, 7)
-train_labels = np.load('data/pointnet/train_labels.npy')
-test_groups = np.load('data/pointnet/test_groups.npy')
-test_labels = np.load('data/pointnet/test_labels.npy')
+train_groups = np.load(BASE_DIR / 'data/pointnet/train_groups.npy')  # (10000, 1024, 7)
+train_labels = np.load(BASE_DIR / 'data/pointnet/train_labels.npy')
+test_groups = np.load(BASE_DIR / 'data/pointnet/test_groups.npy')
+test_labels = np.load(BASE_DIR / 'data/pointnet/test_labels.npy')
 
 print(f"  Train: {train_groups.shape}, Labels: {np.bincount(train_labels)}")
 print(f"  Test: {test_groups.shape}, Labels: {np.bincount(test_labels)}")
@@ -180,7 +183,7 @@ for epoch in range(1, EPOCHS + 1):
             'num_classes': NUM_CLASSES,
             'architecture': '3DCertify',
             'pool_function': 'improved_max',
-        }, 'models/pointnet_3dcertify_64p.pth')
+        }, BASE_DIR / 'saved_models/pointnet_3dcertify_64p.pth')
         print(f"  ✓ Best model saved! (Test Acc: {test_acc:.2f}%)")
 
     print()
@@ -188,5 +191,5 @@ for epoch in range(1, EPOCHS + 1):
 print("="*70)
 print("Training complete!")
 print(f"Best test accuracy: {best_acc:.2f}%")
-print(f"Model saved to: models/pointnet_3dcertify_64p.pth")
+print(f"Model saved to: saved_models/pointnet_3dcertify_64p.pth")
 print("="*70)

@@ -1,29 +1,37 @@
 # ============================================================================
-# α,β-CROWN Configuration for PointNet Verification
+# α,β-CROWN Configuration for PointNet Verification - OPTIMIZED
 # Based on official VNN-COMP configuration format
 # Documentation: https://github.com/Verified-Intelligence/alpha-beta-CROWN
+#
+# MEMORY OPTIMIZATIONS for limited GPU (3.65GB):
+# - Sparse alpha and intermediate bounds
+# - Small batch sizes
+# - Aggressive pruning
+# - CPU fallback for specifications
+# - Branch-and-bound with timeout
 # ============================================================================
 
 general:
-  device: cuda                    # Use GPU for verification
+  device: cpu                     # Use CPU to avoid GPU OOM (change to cuda if > 8GB GPU)
   seed: 100                       # Random seed for reproducibility
   conv_mode: matrix               # "matrix" mode supports Conv1d (patches doesn't)
   deterministic: false
   double_fp: false
   loss_reduction_func: sum
-  sparse_alpha: true
-  sparse_interm: true
+  sparse_alpha: true              # CRITICAL: Use sparse alpha to save memory
+  sparse_interm: true             # CRITICAL: Use sparse intermediate bounds
   save_adv_example: false
   precompile_jit: false
   complete_verifier: bab          # Branch-and-bound with beta-CROWN
   enable_incomplete_verification: true  # Enable α-CROWN first
   results_file: /home/francesca/mola-pointnet-verification/results/abcrown_results.txt
   root_path: /home/francesca/mola-pointnet-verification
+  store_all_specs_on_cpu: true    # MEMORY: Store specs on CPU
 
 model:
-  onnx_path: /home/francesca/mola-pointnet-verification/models/pointnet_mean_for_abcrown.onnx
-  input_shape: [-1, 1024, 7]      # Batch, points (original), features (xyz+4)
-  cache_onnx_conversion: false
+  onnx_path: /home/francesca/mola-pointnet-verification/saved_models/pointnet_autolirpa_flat.onnx
+  input_shape: [-1, 192]          # Batch, flattened input (64 points * 3 coords)
+  cache_onnx_conversion: false    # Disable cache for fresh runs
   flatten_final_output: false
 
 data:
@@ -37,67 +45,79 @@ specification:
   type: lp                        # L_p norm perturbation
   robustness_type: verified-acc   # Verify against all labels
   norm: .inf                      # L-infinity norm
-  epsilon: 0.005                  # Perturbation budget
-  vnnlib_path: /home/francesca/mola-pointnet-verification/specs/spec_mean_sample0_eps0.005.vnnlib
+  epsilon: 0.01                   # Perturbation budget (1 cm at normalized scale)
+  vnnlib_path: /home/francesca/mola-pointnet-verification/specs/spec_autolirpa_sample521_eps0.05.vnnlib
 
 solver:
-  batch_size: 256                 # Reduce for smaller GPU memory
-  auto_enlarge_batch_size: true
+  batch_size: 64                  # MEMORY: Small batch size for limited GPU
+  auto_enlarge_batch_size: false  # MEMORY: Don't auto-enlarge
   min_batch_size_ratio: 0.1
   use_float64_in_last_iteration: false
-  early_stop_patience: 10
+  early_stop_patience: 5          # Early stop sooner to save time
   bound_prop_method: alpha-crown  # Use α-CROWN for bound propagation
   prune_after_crown: true
+  build_batch_size: 1000          # MEMORY: Limit specs to handle at once
 
   crown:
-    batch_size: 1000000000
-    max_crown_size: 1000000000
+    batch_size: 10000             # MEMORY: Smaller batched CROWN size
+    max_crown_size: 10000         # MEMORY: Limit max CROWN output size
 
   alpha-crown:
     alpha: true
     lr_alpha: 0.1                 # Learning rate for alpha
-    iteration: 100                # Iterations for incomplete verification
-    share_alphas: false
-    lr_decay: 0.98
-    full_conv_alpha: true
+    iteration: 100                # More iterations for tighter bounds
+    share_alphas: true            # MEMORY: Share alphas to save memory
+    lr_decay: 0.99                # Slower decay for better convergence
+    full_conv_alpha: false        # MEMORY: Don't use full conv alpha
+    max_time: 0.8                 # Allow more time for alpha optimization
 
   beta-crown:
-    lr_alpha: 0.01                # Learning rate for alpha in BaB
-    lr_beta: 0.05                 # Learning rate for beta
-    lr_decay: 0.98
+    lr_alpha: 0.02                # Slightly higher for faster convergence
+    lr_beta: 0.1                  # Higher beta LR for faster splitting
+    lr_decay: 0.99
     optimizer: adam
-    iteration: 50                 # Iterations per BaB node
+    iteration: 30                 # More iterations per BaB node
     beta: true
     beta_warmup: true
 
 bab:
-  max_domains: 100000             # Max subproblems
+  max_domains: 50000              # Allow more domains for complete exploration
   decision_thresh: 0              # Threshold for verified
-  timeout: 120                    # 2 minutes per sample
+  timeout: 300                    # 5 minutes per sample
   timeout_scale: 1
-  max_iterations: -1
+  max_iterations: 5000            # More iterations
   pruning_in_iteration: true
-  pruning_in_iteration_ratio: 0.2
+  pruning_in_iteration_ratio: 0.2 # Balance between pruning and exploration
   batched_domain_list: true
   tree_traversal: depth_first
+  hugetensor_allocator: true      # MEMORY: Use huge tensor allocator
+  interm_transfer: true           # Transfer intermediate bounds between domains
+
+  cut:
+    enabled: false                # MEMORY: Disable cutting planes (memory intensive)
+    bab_cut: false
 
   branching:
     method: kfsb                  # k-layer filtered smart branching
-    candidates: 3                 # Candidates for branching
+    candidates: 3                 # More candidates for better decisions
     reduceop: min
     enable_intermediate_bound_opt: false
 
     nonlinear_split:
       method: bbps                # Branching point selection
       num_branches: 2
-      filter: false
+      filter: true                # Enable filtering for better branching
+      filter_batch_size: 1000
+
+    input_split:
+      enable: false               # Don't split on input space
 
 attack:
-  general_attack: true            # Enable PGD attack first
+  general_attack: false           # DISABLED: Use only α,β-CROWN verification
   pgd_order: before               # Run attack before verification
-  pgd_steps: 100                  # PGD iterations
-  pgd_restarts: 30                # Random restarts
-  pgd_batch_size: 100000000
+  pgd_steps: 50                   # SPEED: Fewer PGD iterations (was 100)
+  pgd_restarts: 10                # SPEED: Fewer restarts (was 30)
+  pgd_batch_size: 1000            # MEMORY: Smaller batch size
   pgd_early_stop: true
   pgd_lr_decay: 0.99
   pgd_alpha: auto

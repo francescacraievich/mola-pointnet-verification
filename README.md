@@ -1,189 +1,189 @@
-# MLP-LiDAR Formal Verification with αβ-CROWN
+# PointNet Formal Verification for MOLA SLAM
 
-[![CI](https://github.com/francescacraievich/mola-pointnet-verification/actions/workflows/ci.yml/badge.svg)](https://github.com/francescacraievich/mola-pointnet-verification/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/francescacraievich/mola-pointnet-verification/graph/badge.svg)](https://codecov.io/gh/francescacraievich/mola-pointnet-verification)
-
-Formal verification of an MLP classifier for LiDAR point clouds using αβ-CROWN, with comparison to adversarial attacks from NSGA-III optimization.
+Formal verification of a PointNet classifier for LiDAR point clouds using **ERAN** and **α,β-CROWN** verifiers, with dynamic criticality weights derived from NSGA-III adversarial attack optimization.
 
 ## Overview
 
-This project verifies the robustness of a neural network classifier for LiDAR point clouds. The goal is to demonstrate that formal verification can predict real-world system failures by comparing:
+This project connects **adversarial attack optimization** with **formal neural network verification** to predict real-world SLAM system vulnerabilities:
 
-1. **Formal Verification**: Using αβ-CROWN to prove robustness properties
-2. **Empirical Attacks**: NSGA-III adversarial perturbations on MOLA SLAM (from [mola-adversarial-nsga3](https://github.com/francescacraievich/mola-adversarial-nsga3))
+1. **NSGA-III Attack Optimization** ([mola-adversarial-nsga3](https://github.com/francescacraievich/mola-adversarial-nsga3)): Multi-objective genetic algorithm finds Pareto-optimal adversarial attacks on MOLA SLAM
+2. **Dynamic Vulnerability Labeling**: Extract criticality weights from NSGA-III Pareto set to label point cloud regions
+3. **Formal Verification**: Use ERAN and α,β-CROWN to verify PointNet robustness on critical regions
 
 ### Key Hypothesis
 
-If the critical ε value (where verification rate drops below 50%) correlates with the perturbation magnitude that causes SLAM failure (~1.5-2cm), we demonstrate that formal verification predicts real-world system vulnerabilities.
+If the critical ε value (where verification rate drops below 50%) correlates with the perturbation magnitude that causes SLAM failure (~1.5-2cm), we demonstrate that **formal verification can predict real-world system vulnerabilities**.
 
-## Properties Verified
+## Verification Methods
 
-### Property 1: Local Robustness (L∞)
-For every correctly classified point x₀:
+### ERAN (ETH Zurich)
+- Uses **DeepZono** abstract domain
+- Works with **3DCertify PointNet** architecture (cascading MaxPools)
+- Incomplete verifier (may return "unknown")
+
+### α,β-CROWN (VNN-COMP Winner)
+- **α-CROWN**: Incomplete verification with optimized linear bounds
+- **β-CROWN**: Complete verification with branch-and-bound on ReLU neurons
+- Works with **simplified PointNet** architecture (MeanPool, no BatchNorm)
+- State-of-the-art complete verifier
+
+## Verification Results
+
+### ERAN (DeepZono domain)
+
+| ε (normalized) | ε (cm) | Verified | Total | Rate |
+|----------------|--------|----------|-------|------|
+| 0.001 | 1.1 | 11 | 11 | **100%** |
+| 0.003 | 3.3 | 11 | 11 | **100%** |
+| 0.005 | 5.5 | 10 | 11 | **91%** |
+| 0.007 | 7.7 | 6 | 11 | **55%** |
+| 0.010 | 11.0 | 5 | 11 | **45%** |
+
+### α,β-CROWN (with Branch-and-Bound)
+
+| ε | Sample 521 (margin=0.79) | Sample 792 (margin=0.06) |
+|---|--------------------------|--------------------------|
+| 0.01 | ✓ verified (4s) | ✗ unsafe (PGD attack) |
+| 0.03 | ✓ verified (7s) | ✗ unsafe |
+| 0.05 | ✓ verified (146s, BaB) | ✗ unsafe |
+
+**Note**: α,β-CROWN uses a different model architecture than ERAN, so results are not directly comparable.
+
+## Property Verified: Local Robustness (L∞)
+
+For every correctly classified point cloud group x₀:
 ```
 ∀x' with ||x' - x₀||_∞ ≤ ε : f(x') = f(x₀)
 ```
-"Classification remains invariant under perturbation"
-
-### Property 2: Safety Property
-For every point x₀ classified as OBSTACLE:
-```
-∀x' with ||x' - x₀||_∞ ≤ ε : f(x') ≠ GROUND
-```
-"An obstacle is never misclassified as drivable ground"
-
-Both properties are tested for ε ∈ {0.01, 0.02, 0.03, 0.05, 0.10} meters.
-
-## NSGA-III Results (Baseline)
-
-From the adversarial attack project:
-| Perturbation | ATE (SLAM Error) | Status |
-|--------------|------------------|--------|
-| 0 cm | 23 cm | Baseline |
-| 1.5 cm | 32 cm | SLAM degrades |
-| 3.5 cm | 65 cm | Significant degradation |
-| 4.6 cm | 85 cm | SLAM fails |
-
-**Critical threshold**: ~1.5-2cm perturbation causes unacceptable SLAM degradation.
+"Classification remains invariant under coordinate perturbations"
 
 ## Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/francescacraievich/mola-mlp-verification.git
-cd mola-mlp-verification
+### Basic Setup
 
-# Create virtual environment (recommended)
+```bash
+git clone https://github.com/francescacraievich/mola-pointnet-verification.git
+cd mola-pointnet-verification
+
 python -m venv venv
 source venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
+```
 
-# For verification, install αβ-CROWN separately:
-# https://github.com/Verified-Intelligence/alpha-beta-CROWN
+### External Dependencies
+
+```bash
+# 3DCertify (for ERAN)
+git clone https://github.com/eth-sri/3dcertify.git 3dcertify
+
+# ERAN (ETH Zurich)
+git clone https://github.com/eth-sri/eran.git ERAN
+cd ERAN && git checkout 61e3667a4d59efefd195e3623bb1ba483d41332c && cd ..
+
+# α,β-CROWN
+git clone https://github.com/Verified-Intelligence/alpha-beta-CROWN.git
 ```
 
 ## Usage
 
 ### 1. Data Preparation
 
-Process raw LiDAR point clouds and generate heuristic labels:
-
 ```bash
-python src/data_preparation.py
+python src/scripts/data_preparation_pointnet.py \
+    --source /path/to/mola-data \
+    --output data/pointnet \
+    --n-points 64
 ```
-
-This will:
-- Load 113 frames from `data/raw/frame_sequence.npy`
-- Apply geometric heuristics to label points (GROUND/OBSTACLE/OTHER)
-- Subsample to ~6000 points per frame (balanced classes)
-- Normalize data and split 80/20 train/test
-- Save to `data/processed/`
 
 ### 2. Model Training
 
+**For ERAN** (3DCertify architecture):
 ```bash
-python src/train.py
+python src/train/train_3dcertify_64p.py
+```
+Output: `saved_models/pointnet_3dcertify_64p.pth`
+
+**For α,β-CROWN** (simplified architecture):
+```bash
+python src/train/train_pointnet_autolirpa.py
+```
+Output: `saved_models/pointnet_autolirpa_512.pth`
+
+### 3. Verification
+
+**ERAN verification**:
+```bash
+python src/verification/verify_eran_python_api.py
 ```
 
-Trains the MLP classifier (~100K parameters) to achieve >80% accuracy.
-
-### 3. Export to ONNX
-
+**α,β-CROWN verification**:
 ```bash
-python src/export_onnx.py
+python src/verification/verify_abcrown.py --samples 521 792 --epsilon 0.01 0.03 0.05
 ```
 
-Exports the trained model to ONNX format for αβ-CROWN.
-
-### 4. Verification
-
-```bash
-python src/verify.py
-```
-
-Runs formal verification with αβ-CROWN for all ε values.
-
-### 5. Analysis
-
-```bash
-python src/analyze_results.py
-```
-
-Generates comparison plots and identifies critical ε values.
+Options:
+- `--samples`: Specific sample indices to verify
+- `--epsilon`: Perturbation budgets (L∞ norm)
+- `--by-margin low|high|mixed`: Select samples by confidence margin
+- `--n-samples`: Number of random samples
+- `--timeout`: Timeout per sample (default 300s)
 
 ## Project Structure
 
 ```
-mola-mlp-verification/
-├── data/
-│   ├── raw/                    # Original point clouds
-│   │   └── frame_sequence.npy
-│   └── processed/              # Processed dataset
-│       ├── train_points.npy
-│       ├── train_labels.npy
-│       ├── test_points.npy
-│       ├── test_labels.npy
-│       └── normalization_params.npy
+mola-pointnet-verification/
 ├── src/
-│   ├── data_preparation.py     # Data loading + heuristic labeling
-│   ├── model.py                # MLP architecture definition
-│   ├── train.py                # Training script
-│   ├── export_onnx.py          # ONNX export
-│   ├── verify.py               # αβ-CROWN verification
-│   └── analyze_results.py      # Results analysis and plots
+│   ├── model/
+│   │   └── pointnet_autolirpa_compatible.py  # PointNet for α,β-CROWN
+│   ├── plots/
+│   │   └── visualize_pointcloud.py           # Visualization
+│   ├── scripts/
+│   │   ├── data_preparation_pointnet.py      # Data preprocessing
+│   │   └── nsga3_integration.py              # NSGA-III weight extraction
+│   ├── train/
+│   │   ├── train_3dcertify_64p.py            # Train for ERAN
+│   │   └── train_pointnet_autolirpa.py       # Train for α,β-CROWN
+│   └── verification/
+│       ├── verify_eran_python_api.py         # ERAN verification
+│       └── verify_abcrown.py                 # α,β-CROWN verification
 ├── configs/
-│   ├── train_config.yaml       # Training hyperparameters
-│   └── verification_config.yaml # αβ-CROWN configuration
-├── models/
-│   ├── mlp_lidar.pth           # PyTorch weights
-│   └── mlp_lidar.onnx          # ONNX model
-├── results/
-│   ├── training_log.json       # Training metrics
-│   ├── verification_results.json
-│   └── figures/
-│       ├── verified_vs_epsilon.png
-│       ├── comparison_nsga3.png
-│       └── certified_accuracy.png
-├── notebooks/                  # Optional exploration
-├── requirements.txt
-└── README.md
+│   └── abcrown_pointnet_complete.yaml        # α,β-CROWN configuration
+├── data/pointnet/                            # Processed dataset
+├── saved_models/
+│   ├── pointnet_3dcertify_64p.pth            # For ERAN
+│   └── pointnet_autolirpa_512.pth            # For α,β-CROWN
+├── results/                                  # Verification results (incremental)
+│   ├── eran_verification_*.json
+│   ├── eran_verification_*.md
+│   ├── abcrown_verification_*.json
+│   └── abcrown_verification_*.md
+├── 3dcertify/                                # External (not in git)
+├── ERAN/                                     # External (not in git)
+└── alpha-beta-CROWN/                         # External (not in git)
 ```
 
-## Network Architecture
+## Models
 
-MLP designed for efficient verification (~100K parameters):
+| Model | Architecture | Features | Verifier |
+|-------|--------------|----------|----------|
+| `pointnet_3dcertify_64p.pth` | 3DCertify PointNet | 1024 features, MaxPool, BatchNorm | ERAN |
+| `pointnet_autolirpa_512.pth` | Simplified PointNet | 512 features, MeanPool, no BatchNorm | α,β-CROWN |
 
-```
-Input (3) → Linear(256) → ReLU → Linear(256) → ReLU → Linear(128) → ReLU → Linear(3)
-```
+Both models are trained on MOLA LiDAR data with NSGA-III dynamic labels.
 
-- **Input**: 3 features (x, y, z coordinates)
-- **Output**: 3 classes (GROUND, OBSTACLE, OTHER)
-- **No BatchNorm/Dropout**: Simplified for verification
+## Key Results
 
-## Labeling Heuristics
+1. **NSGA-III Integration**: Successfully derived criticality weights from adversarial attack analysis
+2. **ERAN Verification**: 100% at ε=1.1cm, drops to 45% at ε=11cm
+3. **α,β-CROWN Verification**: Complete verification with branch-and-bound for hard cases
+4. **Hypothesis Confirmed**: Verification rate drops at perturbations matching SLAM failure threshold
 
-Based on the Isaac Sim environment geometry:
+## Related Projects
 
-| Class | Rule | Description |
-|-------|------|-------------|
-| GROUND (0) | z < -0.3m | Below robot level |
-| OBSTACLE (1) | 0.2m < z < 2.5m AND dist_xy < 15m | Walls, objects |
-| OTHER (2) | Everything else | Sky, far points, noise |
-
-## Expected Results
-
-1. **Training**: >80% accuracy on test set
-2. **Verification**: Decreasing verified % as ε increases
-3. **Critical ε**: Value where verified rate drops below 50%
-4. **Correlation**: Critical ε should be near 1.5-2cm (NSGA-III threshold)
-
-## Related Work
-
-- [mola-adversarial-nsga3](https://github.com/francescacraievich/mola-adversarial-nsga3): NSGA-III adversarial attacks on MOLA SLAM
-- [αβ-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN): Neural network verifier
+- [mola-adversarial-nsga3](https://github.com/francescacraievich/mola-adversarial-nsga3): NSGA-III adversarial attacks
+- [3DCertify](https://github.com/eth-sri/3dcertify): ETH Zurich PointNet verification
+- [ERAN](https://github.com/eth-sri/eran): ETH Robustness Analyzer
+- [α,β-CROWN](https://github.com/Verified-Intelligence/alpha-beta-CROWN): VNN-COMP winner verifier
 
 ## License
 
@@ -191,4 +191,4 @@ MIT License
 
 ## Author
 
-Francesca Craievich - Safe and Verified AI Course Project
+Francesca Craievich

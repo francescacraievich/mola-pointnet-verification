@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """Visualize LiDAR point cloud data from Isaac Sim + MOLA SLAM."""
 
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+BASE_DIR = Path(__file__).parent.parent.parent  # mola-pointnet-verification/
+
 
 def load_data():
     """Load raw point cloud data."""
-    data = np.load('data/raw/frame_sequence.npy', allow_pickle=True)
-    timestamps = np.load('data/raw/frame_sequence.timestamps.npy', allow_pickle=True)
+    data = np.load(BASE_DIR / 'data/raw/frame_sequence.npy', allow_pickle=True)
+    timestamps = np.load(BASE_DIR / 'data/raw/frame_sequence.timestamps.npy', allow_pickle=True)
     return data, timestamps
 
 

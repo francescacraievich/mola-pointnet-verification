@@ -3,19 +3,12 @@ venv/
 .venv/
 
 
-
-
-# Data files 
-data/processed/
 # Note: *.npy files tracked with Git LFS
 *.npy
 !data/pointnet/*.npy
 !data/raw/*.npy
 !runs/*.npy
 
-# Model weights (
-models/*.pth
-models/*.onnx
 
 # Python
 __pycache__/

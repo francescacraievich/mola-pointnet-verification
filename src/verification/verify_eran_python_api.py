@@ -12,20 +12,39 @@ This bypasses ERAN's CLI and ONNX translator, avoiding the 4D shape issue.
 """
 
 import sys
-sys.path.insert(0, '.')
-sys.path.insert(0, '3dcertify')
-sys.path.insert(0, 'ERAN/tf_verify')
+from pathlib import Path
+
+BASE_DIR = Path(__file__).parent.parent.parent  # mola-pointnet-verification/
+sys.path.insert(0, str(BASE_DIR))
+sys.path.insert(0, str(BASE_DIR / '3dcertify'))
+sys.path.insert(0, str(BASE_DIR / 'ERAN/tf_verify'))
 
 from timeit import default_timer as timer
+from datetime import datetime
 import numpy as np
 import torch
 import json
-from pathlib import Path
 
 from pointnet.model import PointNet
 from relaxations.interval import Interval
 from util import onnx_converter
 from verifier.eran_verifier import EranVerifier
+
+
+def get_next_result_number(results_dir: Path, prefix: str) -> int:
+    """Find the next available result number."""
+    existing = list(results_dir.glob(f"{prefix}_*.json"))
+    if not existing:
+        return 1
+    numbers = []
+    for f in existing:
+        try:
+            num = int(f.stem.split('_')[-1])
+            numbers.append(num)
+        except ValueError:
+            pass
+    return max(numbers) + 1 if numbers else 1
+
 
 print("="*70)
 print("ERAN Verification via Python API")
@@ -33,17 +52,16 @@ print("="*70)
 print()
 
 # Configuration
-MODEL_PATH = 'models/pointnet_3dcertify_64p.pth'
-ONNX_PATH = 'models/pointnet_3dcertify_64p_api.onnx'
-TEST_DATA_PATH = 'data/pointnet/test_groups.npy'
-TEST_LABELS_PATH = 'data/pointnet/test_labels.npy'
-RESULTS_PATH = 'results/eran_python_api_verification.json'
+MODEL_PATH = BASE_DIR / 'saved_models/pointnet_3dcertify_64p.pth'
+ONNX_PATH = BASE_DIR / 'saved_models/pointnet_3dcertify_64p_api.onnx'
+TEST_DATA_PATH = BASE_DIR / 'data/pointnet/test_groups.npy'
+TEST_LABELS_PATH = BASE_DIR / 'data/pointnet/test_labels.npy'
 
 NUM_POINTS = 64
 NUM_CLASSES = 2
-N_VERIFY_SAMPLES = 20
-EPSILONS = [0.001, 0.003, 0.005, 0.007, 0.01]
-DOMAIN = 'deepzono'  # Fast domain for testing
+N_VERIFY_SAMPLES = 100
+EPSILONS = [0.001, 0.003, 0.005, 0.007, 0.01, 0.02, 0.03, 0.05]
+DOMAIN = 'deepzono'  # Fast and stable
 
 print("Configuration:")
 print(f"  Model: {MODEL_PATH}")
@@ -55,7 +73,8 @@ print()
 # Load model
 print("Loading model...")
 checkpoint = torch.load(MODEL_PATH, map_location='cpu', weights_only=True)
-print(f"  Test Accuracy: {checkpoint['test_accuracy']:.2f}%")
+test_accuracy = checkpoint.get('test_accuracy', 'N/A')
+print(f"  Test Accuracy: {test_accuracy}%")
 
 torch_model = PointNet(
     number_points=NUM_POINTS,
@@ -71,7 +90,7 @@ torch_model = torch_model.eval()
 # Export ONNX using 3DCertify's converter
 print("Exporting to ONNX...")
 onnx_model = onnx_converter.convert(torch_model, NUM_POINTS, ONNX_PATH)
-print(f"  ✓ ONNX exported to {ONNX_PATH}")
+print(f"  ONNX exported to {ONNX_PATH}")
 print()
 
 # Initialize ERAN with Python API (not CLI!)
@@ -92,7 +111,7 @@ class FastEranVerifier(EranVerifier):
         return dominant_class, nlb, nub
 
 eran = FastEranVerifier(onnx_model)
-print("  ✓ ERAN ready!")
+print("  ERAN ready!")
 print()
 
 # Load test data
@@ -139,9 +158,10 @@ print("="*70)
 print()
 
 all_results = {}
+total_start = timer()
 
 for eps in EPSILONS:
-    print(f"ε = {eps}")
+    print(f"epsilon = {eps}")
     print("-"*40)
 
     verified_count = 0
@@ -160,7 +180,7 @@ for eps in EPSILONS:
         pred_label = prediction.data.max(1)[1].item()
 
         if pred_label != label:
-            print(f"  [{count+1:2d}/{len(sample_indices)}] Sample {idx:4d}: ⊘ SKIPPED (wrong prediction)")
+            print(f"  [{count+1:2d}/{len(sample_indices)}] Sample {idx:4d}: SKIPPED (wrong prediction)")
             continue
 
         total_tested += 1
@@ -184,29 +204,29 @@ for eps in EPSILONS:
 
             if verified:
                 verified_count += 1
-                print(f"✓ ({elapsed:.2f}s)")
+                print(f"verified ({elapsed:.2f}s)")
             else:
-                print(f"✗ (dom={dominant_class}, {elapsed:.2f}s)")
+                print(f"not verified (dom={dominant_class}, {elapsed:.2f}s)")
 
             results_list.append({
                 'sample_idx': int(idx),
                 'label': int(label),
                 'verified': bool(verified),
                 'dominant_class': int(dominant_class) if dominant_class != -1 else -1,
-                'time': elapsed
+                'time': round(elapsed, 2)
             })
 
         except Exception as e:
             elapsed = timer() - start
             total_time += elapsed
-            print(f"✗ ERROR: {str(e)[:40]} ({elapsed:.2f}s)")
+            print(f"ERROR: {str(e)[:40]} ({elapsed:.2f}s)")
 
             results_list.append({
                 'sample_idx': int(idx),
                 'label': int(label),
                 'verified': False,
                 'error': str(e),
-                'time': elapsed
+                'time': round(elapsed, 2)
             })
 
     # Summary
@@ -216,18 +236,22 @@ for eps in EPSILONS:
         print(f"\n  Summary: {verified_count}/{total_tested} verified ({rate:.1f}%)")
         print(f"  Avg time: {avg_time:.2f}s, Total: {total_time:.1f}s")
     else:
+        rate = 0
+        avg_time = 0
         print("\n  No samples tested")
 
     all_results[str(eps)] = {
         'epsilon': eps,
         'verified_count': verified_count,
         'total_tested': total_tested,
-        'verification_rate': (100*verified_count/total_tested) if total_tested > 0 else 0,
-        'avg_time': (total_time/total_tested) if total_tested > 0 else 0,
-        'total_time': total_time,
+        'verification_rate': round(rate, 1),
+        'avg_time': round(avg_time, 2),
+        'total_time': round(total_time, 2),
         'samples': results_list
     }
     print()
+
+total_elapsed = timer() - total_start
 
 # Final summary
 print("="*70)
@@ -240,21 +264,51 @@ for eps_str, r in all_results.items():
     print(f"{float(eps_str):>10.4f} | {r['verified_count']:>10} | {r['total_tested']:>8} | "
           f"{r['verification_rate']:>7.1f}% | {r['avg_time']:>9.2f}s")
 
-# Save results
+print(f"\nTotal time: {total_elapsed:.1f}s")
+
+# Save results with incremental numbering
+results_dir = BASE_DIR / 'results'
+results_dir.mkdir(exist_ok=True)
+
+result_num = get_next_result_number(results_dir, "eran_verification")
+json_path = results_dir / f"eran_verification_{result_num}.json"
+md_path = results_dir / f"eran_verification_{result_num}.md"
+
 final_results = {
-    'model_path': MODEL_PATH,
-    'verifier': 'ERAN',
-    'domain': DOMAIN,
-    'architecture': 'improved_max (cascading MaxPools)',
-    'method': 'Python API (not CLI)',
-    'results': all_results
+    'metadata': {
+        'verifier': 'ERAN',
+        'domain': DOMAIN,
+        'model': str(MODEL_PATH.name),
+        'model_accuracy': test_accuracy,
+        'timestamp': datetime.now().isoformat(),
+        'total_time_seconds': round(total_elapsed, 2)
+    },
+    'summary': {eps: {
+        'verified': r['verified_count'],
+        'total': r['total_tested'],
+        'rate_percent': r['verification_rate']
+    } for eps, r in all_results.items()},
+    'details': all_results
 }
 
-Path(RESULTS_PATH).parent.mkdir(parents=True, exist_ok=True)
-with open(RESULTS_PATH, 'w') as f:
+with open(json_path, 'w') as f:
     json.dump(final_results, f, indent=2)
 
+# Save markdown table
+with open(md_path, 'w') as f:
+    f.write(f"# ERAN Verification Results #{result_num}\n\n")
+    f.write(f"**Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+    f.write(f"**Model**: {MODEL_PATH.name} (accuracy: {test_accuracy}%)\n\n")
+    f.write(f"**Domain**: {DOMAIN}\n\n")
+    f.write(f"**Total time**: {total_elapsed:.1f}s\n\n")
+    f.write("## Summary\n\n")
+    f.write("| Epsilon | Verified | Total | Rate |\n")
+    f.write("|---------|----------|-------|------|\n")
+    for eps_str, r in all_results.items():
+        f.write(f"| {float(eps_str)} | {r['verified_count']} | {r['total_tested']} | {r['verification_rate']}% |\n")
+
 print()
-print(f"✓ Results saved to: {RESULTS_PATH}")
+print(f"Results saved to: {json_path}")
+print(f"Markdown saved to: {md_path}")
 print()
 print("SUCCESS: Used ERAN Python API directly, bypassing CLI and ONNX translator!")

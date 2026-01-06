@@ -1,0 +1,474 @@
+{
+  "metadata": {
+    "verifier": "ERAN",
+    "domain": "deepzono",
+    "model": "pointnet_3dcertify_64p.pth",
+    "model_accuracy": 74.1,
+    "timestamp": "2026-01-06T17:36:50.546515",
+    "total_time_seconds": 405.58000000000004
+  },
+  "summary": {
+    "0.001": {
+      "verified": 11,
+      "total": 11,
+      "rate_percent": 100.0
+    },
+    "0.003": {
+      "verified": 11,
+      "total": 11,
+      "rate_percent": 100.0
+    },
+    "0.005": {
+      "verified": 10,
+      "total": 11,
+      "rate_percent": 90.9
+    },
+    "0.007": {
+      "verified": 6,
+      "total": 11,
+      "rate_percent": 54.5
+    },
+    "0.01": {
+      "verified": 5,
+      "total": 11,
+      "rate_percent": 45.5
+    }
+  },
+  "details": {
+    "0.001": {
+      "epsilon": 0.001,
+      "verified_count": 11,
+      "total_tested": 11,
+      "verification_rate": 100.0,
+      "avg_time": 3.4600000000000004,
+      "total_time": 38.1,
+      "samples": [
+        {
+          "sample_idx": 156,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 2.87
+        },
+        {
+          "sample_idx": 586,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 2.8400000000000003
+        },
+        {
+          "sample_idx": 133,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 2.95
+        },
+        {
+          "sample_idx": 961,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 3.3000000000000003
+        },
+        {
+          "sample_idx": 459,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 3.16
+        },
+        {
+          "sample_idx": 207,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 3.64
+        },
+        {
+          "sample_idx": 506,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 3.66
+        },
+        {
+          "sample_idx": 906,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 3.97
+        },
+        {
+          "sample_idx": 424,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 3.4000000000000004
+        },
+        {
+          "sample_idx": 682,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 3.5100000000000002
+        },
+        {
+          "sample_idx": 189,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 4.800000000000001
+        }
+      ]
+    },
+    "0.003": {
+      "epsilon": 0.003,
+      "verified_count": 11,
+      "total_tested": 11,
+      "verification_rate": 100.0,
+      "avg_time": 5.3500000000000005,
+      "total_time": 58.86000000000001,
+      "samples": [
+        {
+          "sample_idx": 156,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 4.710000000000001
+        },
+        {
+          "sample_idx": 586,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 4.7700000000000005
+        },
+        {
+          "sample_idx": 133,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 5.33
+        },
+        {
+          "sample_idx": 961,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 5.840000000000001
+        },
+        {
+          "sample_idx": 459,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 5.07
+        },
+        {
+          "sample_idx": 207,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 5.37
+        },
+        {
+          "sample_idx": 506,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 6.11
+        },
+        {
+          "sample_idx": 906,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 5.6000000000000005
+        },
+        {
+          "sample_idx": 424,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 4.79
+        },
+        {
+          "sample_idx": 682,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 5.220000000000001
+        },
+        {
+          "sample_idx": 189,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 6.04
+        }
+      ]
+    },
+    "0.005": {
+      "epsilon": 0.005,
+      "verified_count": 10,
+      "total_tested": 11,
+      "verification_rate": 90.9,
+      "avg_time": 8.96,
+      "total_time": 98.59,
+      "samples": [
+        {
+          "sample_idx": 156,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 6.550000000000001
+        },
+        {
+          "sample_idx": 586,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 5.720000000000001
+        },
+        {
+          "sample_idx": 133,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 7.420000000000001
+        },
+        {
+          "sample_idx": 961,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 6.710000000000001
+        },
+        {
+          "sample_idx": 459,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 6.7
+        },
+        {
+          "sample_idx": 207,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 9.350000000000001
+        },
+        {
+          "sample_idx": 506,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 9.260000000000002
+        },
+        {
+          "sample_idx": 906,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 7.960000000000001
+        },
+        {
+          "sample_idx": 424,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 11.74
+        },
+        {
+          "sample_idx": 682,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 11.350000000000001
+        },
+        {
+          "sample_idx": 189,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 15.83
+        }
+      ]
+    },
+    "0.007": {
+      "epsilon": 0.007,
+      "verified_count": 6,
+      "total_tested": 11,
+      "verification_rate": 54.5,
+      "avg_time": 10.73,
+      "total_time": 118.01,
+      "samples": [
+        {
+          "sample_idx": 156,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 9.13
+        },
+        {
+          "sample_idx": 586,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 10.75
+        },
+        {
+          "sample_idx": 133,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 12.89
+        },
+        {
+          "sample_idx": 961,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 10.020000000000001
+        },
+        {
+          "sample_idx": 459,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 9.600000000000001
+        },
+        {
+          "sample_idx": 207,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 10.83
+        },
+        {
+          "sample_idx": 506,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 12.360000000000001
+        },
+        {
+          "sample_idx": 906,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 11.15
+        },
+        {
+          "sample_idx": 424,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 8.21
+        },
+        {
+          "sample_idx": 682,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 10.71
+        },
+        {
+          "sample_idx": 189,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 12.350000000000001
+        }
+      ]
+    },
+    "0.01": {
+      "epsilon": 0.01,
+      "verified_count": 5,
+      "total_tested": 11,
+      "verification_rate": 45.5,
+      "avg_time": 8.340000000000002,
+      "total_time": 91.78,
+      "samples": [
+        {
+          "sample_idx": 156,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 11.930000000000001
+        },
+        {
+          "sample_idx": 586,
+          "label": 0,
+          "verified": true,
+          "dominant_class": 0,
+          "time": 11.06
+        },
+        {
+          "sample_idx": 133,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 11.48
+        },
+        {
+          "sample_idx": 961,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 8.05
+        },
+        {
+          "sample_idx": 459,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 6.78
+        },
+        {
+          "sample_idx": 207,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.460000000000001
+        },
+        {
+          "sample_idx": 506,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 6.94
+        },
+        {
+          "sample_idx": 906,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 6.87
+        },
+        {
+          "sample_idx": 424,
+          "label": 1,
+          "verified": true,
+          "dominant_class": 1,
+          "time": 6.210000000000001
+        },
+        {
+          "sample_idx": 682,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.04
+        },
+        {
+          "sample_idx": 189,
+          "label": 1,
+          "verified": false,
+          "dominant_class": -1,
+          "time": 7.95
+        }
+      ]
+    }
+  }
+}
