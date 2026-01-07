@@ -1,5 +1,8 @@
 # PointNet Formal Verification for MOLA SLAM
 
+[![CI](https://github.com/francescacraievich/mola-pointnet-verification/actions/workflows/ci.yml/badge.svg)](https://github.com/francescacraievich/mola-pointnet-verification/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/francescacraievich/mola-pointnet-verification/branch/main/graph/badge.svg)](https://codecov.io/gh/francescacraievich/mola-pointnet-verification)
+
 Formal verification of a PointNet classifier for LiDAR point clouds using **ERAN** and **α,β-CROWN** verifiers, with dynamic criticality weights derived from NSGA-III adversarial attack optimization.
 
 ## Overview
