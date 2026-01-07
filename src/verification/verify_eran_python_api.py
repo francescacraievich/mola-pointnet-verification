@@ -16,15 +16,15 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent.parent  # mola-pointnet-verification/
 sys.path.insert(0, str(BASE_DIR))
-sys.path.insert(0, str(BASE_DIR / '3dcertify'))
-sys.path.insert(0, str(BASE_DIR / 'ERAN/tf_verify'))
+sys.path.insert(0, str(BASE_DIR / "3dcertify"))
+sys.path.insert(0, str(BASE_DIR / "ERAN/tf_verify"))
 
-from timeit import default_timer as timer
+import json
 from datetime import datetime
+from timeit import default_timer as timer
+
 import numpy as np
 import torch
-import json
-
 from pointnet.model import PointNet
 from relaxations.interval import Interval
 from util import onnx_converter
@@ -39,29 +39,29 @@ def get_next_result_number(results_dir: Path, prefix: str) -> int:
     numbers = []
     for f in existing:
         try:
-            num = int(f.stem.split('_')[-1])
+            num = int(f.stem.split("_")[-1])
             numbers.append(num)
         except ValueError:
             pass
     return max(numbers) + 1 if numbers else 1
 
 
-print("="*70)
+print("=" * 70)
 print("ERAN Verification via Python API")
-print("="*70)
+print("=" * 70)
 print()
 
 # Configuration
-MODEL_PATH = BASE_DIR / 'saved_models/pointnet_3dcertify_64p.pth'
-ONNX_PATH = BASE_DIR / 'saved_models/pointnet_3dcertify_64p_api.onnx'
-TEST_DATA_PATH = BASE_DIR / 'data/pointnet/test_groups.npy'
-TEST_LABELS_PATH = BASE_DIR / 'data/pointnet/test_labels.npy'
+MODEL_PATH = BASE_DIR / "saved_models/pointnet_3dcertify_64p.pth"
+ONNX_PATH = BASE_DIR / "saved_models/pointnet_3dcertify_64p_api.onnx"
+TEST_DATA_PATH = BASE_DIR / "data/pointnet/test_groups.npy"
+TEST_LABELS_PATH = BASE_DIR / "data/pointnet/test_labels.npy"
 
 NUM_POINTS = 64
 NUM_CLASSES = 2
-N_VERIFY_SAMPLES = 100
-EPSILONS = [0.001, 0.003, 0.005, 0.007, 0.01, 0.02, 0.03, 0.05]
-DOMAIN = 'deepzono'  # Fast and stable
+N_VERIFY_SAMPLES = 50
+EPSILONS = [0.001, 0.003, 0.005, 0.007, 0.01, 0.02]
+DOMAIN = "deepzono"  # Fast and stable
 
 print("Configuration:")
 print(f"  Model: {MODEL_PATH}")
@@ -72,19 +72,19 @@ print()
 
 # Load model
 print("Loading model...")
-checkpoint = torch.load(MODEL_PATH, map_location='cpu', weights_only=True)
-test_accuracy = checkpoint.get('test_accuracy', 'N/A')
+checkpoint = torch.load(MODEL_PATH, map_location="cpu", weights_only=True)
+test_accuracy = checkpoint.get("test_accuracy", "N/A")
 print(f"  Test Accuracy: {test_accuracy}%")
 
 torch_model = PointNet(
     number_points=NUM_POINTS,
     num_classes=NUM_CLASSES,
     max_features=1024,
-    pool_function='improved_max',
+    pool_function="improved_max",
     disable_assertions=True,
-    transposed_input=True  # 3DCertify uses transposed_input=True
+    transposed_input=True,  # 3DCertify uses transposed_input=True
 )
-torch_model.load_state_dict(checkpoint['model_state_dict'])
+torch_model.load_state_dict(checkpoint["model_state_dict"])
 torch_model = torch_model.eval()
 
 # Export ONNX using 3DCertify's converter
@@ -96,6 +96,7 @@ print()
 # Initialize ERAN with Python API (not CLI!)
 print("Initializing ERAN via Python API...")
 
+
 # Monkey-patch to use deepzono domain
 class FastEranVerifier(EranVerifier):
     def analyze_classification_box(self, bounds: Interval):
@@ -106,9 +107,10 @@ class FastEranVerifier(EranVerifier):
             timeout_lp=self._EranVerifier__TIMEOUT_LP,
             timeout_milp=self._EranVerifier__TIMEOUT_MILP,
             use_default_heuristic=True,
-            testing=True
+            testing=True,
         )
         return dominant_class, nlb, nub
+
 
 eran = FastEranVerifier(onnx_model)
 print("  ERAN ready!")
@@ -119,10 +121,12 @@ print("Loading test data...")
 test_groups = np.load(TEST_DATA_PATH)
 test_labels = np.load(TEST_LABELS_PATH)
 
+
 def subsample_points(data, n_points):
     orig_points = data.shape[1]
-    indices = np.linspace(0, orig_points-1, n_points, dtype=int)
+    indices = np.linspace(0, orig_points - 1, n_points, dtype=int)
     return data[:, indices, :3]
+
 
 test_xyz = subsample_points(test_groups, NUM_POINTS)
 print(f"  Test shape: {test_xyz.shape}")
@@ -133,10 +137,10 @@ test_model = PointNet(
     number_points=NUM_POINTS,
     num_classes=NUM_CLASSES,
     max_features=1024,
-    pool_function='improved_max',
-    transposed_input=False
+    pool_function="improved_max",
+    transposed_input=False,
 )
-test_model.load_state_dict(checkpoint['model_state_dict'])
+test_model.load_state_dict(checkpoint["model_state_dict"])
 test_model.eval()
 
 # Select samples
@@ -145,16 +149,18 @@ sample_indices = []
 samples_per_class = N_VERIFY_SAMPLES // NUM_CLASSES
 for class_id in range(NUM_CLASSES):
     class_indices = np.where(test_labels == class_id)[0]
-    selected = np.random.choice(class_indices, min(samples_per_class, len(class_indices)), replace=False)
+    selected = np.random.choice(
+        class_indices, min(samples_per_class, len(class_indices)), replace=False
+    )
     sample_indices.extend(selected)
 
 print(f"Selected {len(sample_indices)} samples")
 print()
 
 # Verification
-print("="*70)
+print("=" * 70)
 print("Starting Verification")
-print("="*70)
+print("=" * 70)
 print()
 
 all_results = {}
@@ -162,7 +168,7 @@ total_start = timer()
 
 for eps in EPSILONS:
     print(f"epsilon = {eps}")
-    print("-"*40)
+    print("-" * 40)
 
     verified_count = 0
     total_tested = 0
@@ -180,13 +186,19 @@ for eps in EPSILONS:
         pred_label = prediction.data.max(1)[1].item()
 
         if pred_label != label:
-            print(f"  [{count+1:2d}/{len(sample_indices)}] Sample {idx:4d}: SKIPPED (wrong prediction)")
+            print(
+                f"  [{count+1:2d}/{len(sample_indices)}] Sample {idx:4d}: SKIPPED (wrong prediction)"
+            )
             continue
 
         total_tested += 1
 
         # Verify using Python API
-        print(f"  [{count+1:2d}/{len(sample_indices)}] Sample {idx:4d} ({label_str:12}): ", end="", flush=True)
+        print(
+            f"  [{count+1:2d}/{len(sample_indices)}] Sample {idx:4d} ({label_str:12}): ",
+            end="",
+            flush=True,
+        )
 
         lower_bound = sample_xyz - eps
         upper_bound = sample_xyz + eps
@@ -200,7 +212,7 @@ for eps in EPSILONS:
             elapsed = timer() - start
             total_time += elapsed
 
-            verified = (dominant_class == label)
+            verified = dominant_class == label
 
             if verified:
                 verified_count += 1
@@ -208,31 +220,35 @@ for eps in EPSILONS:
             else:
                 print(f"not verified (dom={dominant_class}, {elapsed:.2f}s)")
 
-            results_list.append({
-                'sample_idx': int(idx),
-                'label': int(label),
-                'verified': bool(verified),
-                'dominant_class': int(dominant_class) if dominant_class != -1 else -1,
-                'time': round(elapsed, 2)
-            })
+            results_list.append(
+                {
+                    "sample_idx": int(idx),
+                    "label": int(label),
+                    "verified": bool(verified),
+                    "dominant_class": int(dominant_class) if dominant_class != -1 else -1,
+                    "time": round(elapsed, 2),
+                }
+            )
 
         except Exception as e:
             elapsed = timer() - start
             total_time += elapsed
             print(f"ERROR: {str(e)[:40]} ({elapsed:.2f}s)")
 
-            results_list.append({
-                'sample_idx': int(idx),
-                'label': int(label),
-                'verified': False,
-                'error': str(e),
-                'time': round(elapsed, 2)
-            })
+            results_list.append(
+                {
+                    "sample_idx": int(idx),
+                    "label": int(label),
+                    "verified": False,
+                    "error": str(e),
+                    "time": round(elapsed, 2),
+                }
+            )
 
     # Summary
     if total_tested > 0:
-        rate = 100*verified_count/total_tested
-        avg_time = total_time/total_tested
+        rate = 100 * verified_count / total_tested
+        avg_time = total_time / total_tested
         print(f"\n  Summary: {verified_count}/{total_tested} verified ({rate:.1f}%)")
         print(f"  Avg time: {avg_time:.2f}s, Total: {total_time:.1f}s")
     else:
@@ -241,33 +257,35 @@ for eps in EPSILONS:
         print("\n  No samples tested")
 
     all_results[str(eps)] = {
-        'epsilon': eps,
-        'verified_count': verified_count,
-        'total_tested': total_tested,
-        'verification_rate': round(rate, 1),
-        'avg_time': round(avg_time, 2),
-        'total_time': round(total_time, 2),
-        'samples': results_list
+        "epsilon": eps,
+        "verified_count": verified_count,
+        "total_tested": total_tested,
+        "verification_rate": round(rate, 1),
+        "avg_time": round(avg_time, 2),
+        "total_time": round(total_time, 2),
+        "samples": results_list,
     }
     print()
 
 total_elapsed = timer() - total_start
 
 # Final summary
-print("="*70)
+print("=" * 70)
 print("VERIFICATION SUMMARY")
-print("="*70)
+print("=" * 70)
 print()
 print(f"{'Epsilon':>10} | {'Verified':>10} | {'Total':>8} | {'Rate %':>8} | {'Avg Time':>10}")
-print("-"*60)
+print("-" * 60)
 for eps_str, r in all_results.items():
-    print(f"{float(eps_str):>10.4f} | {r['verified_count']:>10} | {r['total_tested']:>8} | "
-          f"{r['verification_rate']:>7.1f}% | {r['avg_time']:>9.2f}s")
+    print(
+        f"{float(eps_str):>10.4f} | {r['verified_count']:>10} | {r['total_tested']:>8} | "
+        f"{r['verification_rate']:>7.1f}% | {r['avg_time']:>9.2f}s"
+    )
 
 print(f"\nTotal time: {total_elapsed:.1f}s")
 
 # Save results with incremental numbering
-results_dir = BASE_DIR / 'results'
+results_dir = BASE_DIR / "results"
 results_dir.mkdir(exist_ok=True)
 
 result_num = get_next_result_number(results_dir, "eran_verification")
@@ -275,27 +293,30 @@ json_path = results_dir / f"eran_verification_{result_num}.json"
 md_path = results_dir / f"eran_verification_{result_num}.md"
 
 final_results = {
-    'metadata': {
-        'verifier': 'ERAN',
-        'domain': DOMAIN,
-        'model': str(MODEL_PATH.name),
-        'model_accuracy': test_accuracy,
-        'timestamp': datetime.now().isoformat(),
-        'total_time_seconds': round(total_elapsed, 2)
+    "metadata": {
+        "verifier": "ERAN",
+        "domain": DOMAIN,
+        "model": str(MODEL_PATH.name),
+        "model_accuracy": test_accuracy,
+        "timestamp": datetime.now().isoformat(),
+        "total_time_seconds": round(total_elapsed, 2),
     },
-    'summary': {eps: {
-        'verified': r['verified_count'],
-        'total': r['total_tested'],
-        'rate_percent': r['verification_rate']
-    } for eps, r in all_results.items()},
-    'details': all_results
+    "summary": {
+        eps: {
+            "verified": r["verified_count"],
+            "total": r["total_tested"],
+            "rate_percent": r["verification_rate"],
+        }
+        for eps, r in all_results.items()
+    },
+    "details": all_results,
 }
 
-with open(json_path, 'w') as f:
+with open(json_path, "w") as f:
     json.dump(final_results, f, indent=2)
 
 # Save markdown table
-with open(md_path, 'w') as f:
+with open(md_path, "w") as f:
     f.write(f"# ERAN Verification Results #{result_num}\n\n")
     f.write(f"**Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
     f.write(f"**Model**: {MODEL_PATH.name} (accuracy: {test_accuracy}%)\n\n")
@@ -305,7 +326,9 @@ with open(md_path, 'w') as f:
     f.write("| Epsilon | Verified | Total | Rate |\n")
     f.write("|---------|----------|-------|------|\n")
     for eps_str, r in all_results.items():
-        f.write(f"| {float(eps_str)} | {r['verified_count']} | {r['total_tested']} | {r['verification_rate']}% |\n")
+        f.write(
+            f"| {float(eps_str)} | {r['verified_count']} | {r['total_tested']} | {r['verification_rate']}% |\n"
+        )
 
 print()
 print(f"Results saved to: {json_path}")

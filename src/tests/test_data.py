@@ -4,8 +4,8 @@
 import sys
 from pathlib import Path
 
-import pytest
 import numpy as np
+import pytest
 
 BASE_DIR = Path(__file__).parent.parent.parent
 

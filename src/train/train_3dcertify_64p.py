@@ -9,14 +9,14 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent.parent  # mola-pointnet-verification/
 sys.path.insert(0, str(BASE_DIR))
-sys.path.insert(0, str(BASE_DIR / '3dcertify'))
+sys.path.insert(0, str(BASE_DIR / "3dcertify"))
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader
-import numpy as np
 from pointnet.model import PointNet
+from torch.utils.data import DataLoader, TensorDataset
 
 # Config - matching 3DCertify examples
 NUM_POINTS = 64  # Like in verify_perturbation.py examples
@@ -24,35 +24,37 @@ NUM_CLASSES = 2
 BATCH_SIZE = 32
 EPOCHS = 50
 LR = 0.001
-DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-print("="*70)
+print("=" * 70)
 print("Training PointNet (3DCertify Architecture) - 64 Points")
-print("="*70)
+print("=" * 70)
 print(f"Device: {DEVICE}")
 print(f"Points per sample: {NUM_POINTS}")
 print(f"Batch size: {BATCH_SIZE}")
 print(f"Epochs: {EPOCHS}")
-print("="*70)
+print("=" * 70)
 print()
 
 # Load data
 print("Loading MOLA data...")
-train_groups = np.load(BASE_DIR / 'data/pointnet/train_groups.npy')  # (10000, 1024, 7)
-train_labels = np.load(BASE_DIR / 'data/pointnet/train_labels.npy')
-test_groups = np.load(BASE_DIR / 'data/pointnet/test_groups.npy')
-test_labels = np.load(BASE_DIR / 'data/pointnet/test_labels.npy')
+train_groups = np.load(BASE_DIR / "data/pointnet/train_groups.npy")  # (10000, 1024, 7)
+train_labels = np.load(BASE_DIR / "data/pointnet/train_labels.npy")
+test_groups = np.load(BASE_DIR / "data/pointnet/test_groups.npy")
+test_labels = np.load(BASE_DIR / "data/pointnet/test_labels.npy")
 
 print(f"  Train: {train_groups.shape}, Labels: {np.bincount(train_labels)}")
 print(f"  Test: {test_groups.shape}, Labels: {np.bincount(test_labels)}")
 print()
 
+
 # Subsample to NUM_POINTS and extract XYZ only
 def subsample_points(data, n_points):
     """Subsample from original points to n_points and extract XYZ only."""
     orig_points = data.shape[1]
-    indices = np.linspace(0, orig_points-1, n_points, dtype=int)
+    indices = np.linspace(0, orig_points - 1, n_points, dtype=int)
     return data[:, indices, :3]  # Only XYZ coordinates
+
 
 print(f"Preprocessing: extracting XYZ and subsampling to {NUM_POINTS} points...")
 train_xyz = subsample_points(train_groups, NUM_POINTS)
@@ -62,28 +64,14 @@ print(f"  Test shape: {test_xyz.shape}")
 print()
 
 # Create datasets
-train_dataset = TensorDataset(
-    torch.FloatTensor(train_xyz),
-    torch.LongTensor(train_labels)
-)
-test_dataset = TensorDataset(
-    torch.FloatTensor(test_xyz),
-    torch.LongTensor(test_labels)
-)
+train_dataset = TensorDataset(torch.FloatTensor(train_xyz), torch.LongTensor(train_labels))
+test_dataset = TensorDataset(torch.FloatTensor(test_xyz), torch.LongTensor(test_labels))
 
 train_loader = DataLoader(
-    train_dataset,
-    batch_size=BATCH_SIZE,
-    shuffle=True,
-    num_workers=4,
-    pin_memory=True
+    train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4, pin_memory=True
 )
 test_loader = DataLoader(
-    test_dataset,
-    batch_size=BATCH_SIZE,
-    shuffle=False,
-    num_workers=4,
-    pin_memory=True
+    test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4, pin_memory=True
 )
 
 # Create model - EXACTLY like 3DCertify
@@ -92,8 +80,8 @@ model = PointNet(
     number_points=NUM_POINTS,
     num_classes=NUM_CLASSES,
     max_features=1024,
-    pool_function='improved_max',  # Cascaded MaxPool for better verification
-    transposed_input=False  # Input is (batch, n_points, 3)
+    pool_function="improved_max",  # Cascaded MaxPool for better verification
+    transposed_input=False,  # Input is (batch, n_points, 3)
 ).to(DEVICE)
 
 print(f"  Parameters: {sum(p.numel() for p in model.parameters()):,}")
@@ -104,6 +92,7 @@ print()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=LR)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
+
 
 # Training loop
 def train_epoch(epoch):
@@ -127,13 +116,16 @@ def train_epoch(epoch):
         total += target.size(0)
 
         if (batch_idx + 1) % 50 == 0:
-            print(f"  [{batch_idx+1}/{len(train_loader)}] "
-                  f"Loss: {loss.item():.4f}, "
-                  f"Acc: {100.*correct/total:.2f}%")
+            print(
+                f"  [{batch_idx+1}/{len(train_loader)}] "
+                f"Loss: {loss.item():.4f}, "
+                f"Acc: {100.*correct/total:.2f}%"
+            )
 
     avg_loss = total_loss / len(train_loader)
-    accuracy = 100. * correct / total
+    accuracy = 100.0 * correct / total
     return avg_loss, accuracy
+
 
 def evaluate():
     model.eval()
@@ -148,13 +140,14 @@ def evaluate():
             correct += pred.eq(target).sum().item()
             total += target.size(0)
 
-    accuracy = 100. * correct / total
+    accuracy = 100.0 * correct / total
     return accuracy
 
+
 # Train
-print("="*70)
+print("=" * 70)
 print("Training...")
-print("="*70)
+print("=" * 70)
 print()
 
 best_acc = 0.0
@@ -174,22 +167,25 @@ for epoch in range(1, EPOCHS + 1):
     # Save best model
     if test_acc > best_acc:
         best_acc = test_acc
-        torch.save({
-            'epoch': epoch,
-            'model_state_dict': model.state_dict(),
-            'test_accuracy': test_acc,
-            'train_accuracy': train_acc,
-            'num_points': NUM_POINTS,
-            'num_classes': NUM_CLASSES,
-            'architecture': '3DCertify',
-            'pool_function': 'improved_max',
-        }, BASE_DIR / 'saved_models/pointnet_3dcertify_64p.pth')
+        torch.save(
+            {
+                "epoch": epoch,
+                "model_state_dict": model.state_dict(),
+                "test_accuracy": test_acc,
+                "train_accuracy": train_acc,
+                "num_points": NUM_POINTS,
+                "num_classes": NUM_CLASSES,
+                "architecture": "3DCertify",
+                "pool_function": "improved_max",
+            },
+            BASE_DIR / "saved_models/pointnet_3dcertify_64p.pth",
+        )
         print(f"  ✓ Best model saved! (Test Acc: {test_acc:.2f}%)")
 
     print()
 
-print("="*70)
+print("=" * 70)
 print("Training complete!")
 print(f"Best test accuracy: {best_acc:.2f}%")
 print(f"Model saved to: saved_models/pointnet_3dcertify_64p.pth")
-print("="*70)
+print("=" * 70)

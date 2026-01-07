@@ -4,8 +4,8 @@
 import sys
 from pathlib import Path
 
-import pytest
 import numpy as np
+import pytest
 
 BASE_DIR = Path(__file__).parent.parent.parent
 
@@ -161,7 +161,7 @@ def get_next_result_number(results_dir: Path, prefix: str) -> int:
     numbers = []
     for f in existing:
         try:
-            num = int(f.stem.split('_')[-1])
+            num = int(f.stem.split("_")[-1])
             numbers.append(num)
         except ValueError:
             pass
@@ -178,6 +178,7 @@ class TestONNXModel:
             pytest.skip("ONNX model not found")
 
         import onnx
+
         model = onnx.load(str(onnx_path))
         onnx.checker.check_model(model)
 

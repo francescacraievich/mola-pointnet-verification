@@ -37,7 +37,7 @@ class PointNetAutoLiRPA(nn.Module):
         num_points: int = 64,
         num_classes: int = 2,
         max_features: int = 1024,
-        use_batchnorm: bool = True
+        use_batchnorm: bool = True,
     ):
         super().__init__()
         self.num_points = num_points
@@ -128,10 +128,7 @@ class PointNetAutoLiRPA(nn.Module):
 
 
 def load_original_weights_to_compatible_model(
-    original_model_path: str,
-    num_points: int = 64,
-    num_classes: int = 2,
-    max_features: int = 1024
+    original_model_path: str, num_points: int = 64, num_classes: int = 2, max_features: int = 1024
 ) -> PointNetAutoLiRPA:
     """
     Load weights from original 3DCertify PointNet to compatible model.
@@ -150,16 +147,16 @@ def load_original_weights_to_compatible_model(
     from pointnet.model import PointNet as PointNet3DCertify
 
     # Load original model
-    checkpoint = torch.load(original_model_path, map_location='cpu', weights_only=True)
+    checkpoint = torch.load(original_model_path, map_location="cpu", weights_only=True)
     orig_model = PointNet3DCertify(
         number_points=num_points,
         num_classes=num_classes,
         max_features=max_features,
-        pool_function='improved_max',
+        pool_function="improved_max",
         disable_assertions=True,
-        transposed_input=False
+        transposed_input=False,
     )
-    orig_model.load_state_dict(checkpoint['model_state_dict'])
+    orig_model.load_state_dict(checkpoint["model_state_dict"])
 
     # Create compatible model
     compat_model = PointNetAutoLiRPA(num_points, num_classes, max_features, use_batchnorm=True)
@@ -226,7 +223,7 @@ def load_original_weights_to_compatible_model(
     return compat_model
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Test the model
     print("Creating auto_LiRPA compatible PointNet...")
     model = PointNetAutoLiRPA(num_points=64, num_classes=2, max_features=1024)

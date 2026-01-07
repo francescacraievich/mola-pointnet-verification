@@ -4,9 +4,9 @@
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 BASE_DIR = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
@@ -22,10 +22,7 @@ class TestPointNetAutoLiRPA:
     def model(self):
         """Create a model instance for testing."""
         return PointNetAutoLiRPA(
-            num_points=64,
-            num_classes=2,
-            max_features=512,
-            use_batchnorm=False
+            num_points=64, num_classes=2, max_features=512, use_batchnorm=False
         )
 
     @pytest.fixture
@@ -106,20 +103,20 @@ class TestModelLoading:
         if not model_path.exists():
             pytest.skip("Model checkpoint not found")
 
-        checkpoint = torch.load(model_path, map_location='cpu', weights_only=True)
+        checkpoint = torch.load(model_path, map_location="cpu", weights_only=True)
 
-        assert 'model_state_dict' in checkpoint
-        assert 'test_accuracy' in checkpoint or 'epoch' in checkpoint
+        assert "model_state_dict" in checkpoint
+        assert "test_accuracy" in checkpoint or "epoch" in checkpoint
 
     def test_load_and_inference(self, model_path):
         """Test loading model and running inference."""
         if not model_path.exists():
             pytest.skip("Model checkpoint not found")
 
-        checkpoint = torch.load(model_path, map_location='cpu', weights_only=True)
+        checkpoint = torch.load(model_path, map_location="cpu", weights_only=True)
 
         model = PointNetAutoLiRPA(64, 2, 512, use_batchnorm=False)
-        model.load_state_dict(checkpoint['model_state_dict'])
+        model.load_state_dict(checkpoint["model_state_dict"])
         model.eval()
 
         x = torch.randn(1, 64, 3)
