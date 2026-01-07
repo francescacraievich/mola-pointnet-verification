@@ -14,7 +14,6 @@ sys.path.insert(0, str(BASE_DIR / "src" / "model"))
 
 import onnx
 import torch
-
 from pointnet_autolirpa_compatible import PointNetAutoLiRPA
 
 

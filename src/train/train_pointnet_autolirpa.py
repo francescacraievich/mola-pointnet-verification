@@ -24,6 +24,7 @@ sys.path.insert(0, str(BASE_DIR))
 sys.path.insert(0, str(BASE_DIR / "src" / "model"))
 
 from pointnet_autolirpa_compatible import PointNetAutoLiRPA
+
 from src.scripts.nsga3_integration import get_criticality_weights
 
 

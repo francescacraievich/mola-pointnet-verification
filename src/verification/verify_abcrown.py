@@ -102,15 +102,21 @@ def save_partial_results(reason="interrupted"):
     with open(md_path, "w") as f:
         f.write(f"# α,β-CROWN Verification Results #{result_num} ({reason})\n\n")
         f.write(f"**Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-        f.write(f"**Model**: pointnet_autolirpa_512.pth (accuracy: {_save_state['test_accuracy']}%)\n\n")
-        f.write(f"**Samples**: {len(_save_state['sample_details'])}/{len(_save_state['selected_samples'])}\n\n")
+        f.write(
+            f"**Model**: pointnet_autolirpa_512.pth (accuracy: {_save_state['test_accuracy']}%)\n\n"
+        )
+        f.write(
+            f"**Samples**: {len(_save_state['sample_details'])}/{len(_save_state['selected_samples'])}\n\n"
+        )
         f.write(f"**Total time**: {elapsed:.1f}s\n\n")
         f.write("## Summary\n\n")
         f.write("| Epsilon | Verified | Unsafe | Timeout | Rate |\n")
         f.write("|---------|----------|--------|---------|------|\n")
         for eps in _save_state["args"].epsilon:
             s = summary_data[str(eps)]
-            f.write(f"| {eps} | {s['verified']} | {s['unsafe']} | {s['timeout']} | {s['rate_percent']}% |\n")
+            f.write(
+                f"| {eps} | {s['verified']} | {s['unsafe']} | {s['timeout']} | {s['rate_percent']}% |\n"
+            )
 
     print(f"Markdown saved to: {md_path}")
 

@@ -52,15 +52,16 @@ print("=" * 70)
 print()
 
 # Configuration
-MODEL_PATH = BASE_DIR / "saved_models/pointnet_3dcertify_64p.pth"
-ONNX_PATH = BASE_DIR / "saved_models/pointnet_3dcertify_64p_api.onnx"
+MODEL_PATH = BASE_DIR / "saved_models/pointnet_3dcertify_512f.pth"
+ONNX_PATH = BASE_DIR / "saved_models/pointnet_3dcertify_512f_api.onnx"
 TEST_DATA_PATH = BASE_DIR / "data/pointnet/test_groups.npy"
 TEST_LABELS_PATH = BASE_DIR / "data/pointnet/test_labels.npy"
 
 NUM_POINTS = 64
 NUM_CLASSES = 2
-N_VERIFY_SAMPLES = 50
-EPSILONS = [0.001, 0.003, 0.005, 0.007, 0.01, 0.02]
+MAX_FEATURES = 512  # Same as alpha-beta-CROWN for fair comparison
+N_VERIFY_SAMPLES = 100
+EPSILONS = [0.001, 0.003, 0.005, 0.007, 0.01, 0.02, 0.03]
 DOMAIN = "deepzono"  # Fast and stable
 
 print("Configuration:")
@@ -79,7 +80,7 @@ print(f"  Test Accuracy: {test_accuracy}%")
 torch_model = PointNet(
     number_points=NUM_POINTS,
     num_classes=NUM_CLASSES,
-    max_features=1024,
+    max_features=MAX_FEATURES,
     pool_function="improved_max",
     disable_assertions=True,
     transposed_input=True,  # 3DCertify uses transposed_input=True
@@ -136,25 +137,42 @@ print()
 test_model = PointNet(
     number_points=NUM_POINTS,
     num_classes=NUM_CLASSES,
-    max_features=1024,
+    max_features=MAX_FEATURES,
     pool_function="improved_max",
     transposed_input=False,
 )
 test_model.load_state_dict(checkpoint["model_state_dict"])
 test_model.eval()
 
-# Select samples
-np.random.seed(42)
-sample_indices = []
-samples_per_class = N_VERIFY_SAMPLES // NUM_CLASSES
-for class_id in range(NUM_CLASSES):
-    class_indices = np.where(test_labels == class_id)[0]
-    selected = np.random.choice(
-        class_indices, min(samples_per_class, len(class_indices)), replace=False
-    )
-    sample_indices.extend(selected)
+# Pre-filter correctly classified samples (like alpha-beta-CROWN)
+print("Pre-filtering correctly classified samples...")
+correct_samples = []
+for idx in range(len(test_xyz)):
+    sample_xyz = test_xyz[idx]
+    label = test_labels[idx]
+    points_tensor = torch.from_numpy(sample_xyz).unsqueeze(0)
+    with torch.no_grad():
+        prediction = test_model(points_tensor)
+    pred_label = prediction.data.max(1)[1].item()
+    if pred_label == label:
+        correct_samples.append(idx)
 
-print(f"Selected {len(sample_indices)} samples")
+print(
+    f"  Correctly classified: {len(correct_samples)}/{len(test_xyz)} ({100*len(correct_samples)/len(test_xyz):.1f}%)"
+)
+
+# Select N_VERIFY_SAMPLES from correctly classified (random, no class balancing)
+np.random.seed(42)
+sample_indices = np.random.choice(
+    correct_samples, min(N_VERIFY_SAMPLES, len(correct_samples)), replace=False
+).tolist()
+
+# Count per class
+n_crit = sum(1 for idx in sample_indices if test_labels[idx] == 0)
+n_non_crit = len(sample_indices) - n_crit
+print(f"Selected {len(sample_indices)} correctly classified samples:")
+print(f"  - CRITICAL: {n_crit}")
+print(f"  - NON_CRITICAL: {n_non_crit}")
 print()
 
 # Verification
@@ -180,20 +198,9 @@ for eps in EPSILONS:
         label = test_labels[idx]
         label_str = "CRITICAL" if label == 0 else "NON_CRITICAL"
 
-        # Check prediction
-        points_tensor = torch.from_numpy(sample_xyz).unsqueeze(0)
-        prediction = test_model(points_tensor)
-        pred_label = prediction.data.max(1)[1].item()
-
-        if pred_label != label:
-            print(
-                f"  [{count+1:2d}/{len(sample_indices)}] Sample {idx:4d}: SKIPPED (wrong prediction)"
-            )
-            continue
-
         total_tested += 1
 
-        # Verify using Python API
+        # Verify using Python API (all samples are pre-filtered as correctly classified)
         print(
             f"  [{count+1:2d}/{len(sample_indices)}] Sample {idx:4d} ({label_str:12}): ",
             end="",

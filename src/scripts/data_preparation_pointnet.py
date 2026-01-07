@@ -539,11 +539,19 @@ def prepare_pointnet_dataset(
     test_labels = all_labels[n_train : n_train + n_test]
 
     print(f"   Train: {len(train_groups)} samples")
-    print(f"     CRITICAL: {(train_labels == LABEL_CRITICAL).sum()} ({100 * (train_labels == LABEL_CRITICAL).mean():.1f}%)")
-    print(f"     NON_CRITICAL: {(train_labels == LABEL_NON_CRITICAL).sum()} ({100 * (train_labels == LABEL_NON_CRITICAL).mean():.1f}%)")
+    print(
+        f"     CRITICAL: {(train_labels == LABEL_CRITICAL).sum()} ({100 * (train_labels == LABEL_CRITICAL).mean():.1f}%)"
+    )
+    print(
+        f"     NON_CRITICAL: {(train_labels == LABEL_NON_CRITICAL).sum()} ({100 * (train_labels == LABEL_NON_CRITICAL).mean():.1f}%)"
+    )
     print(f"   Test: {len(test_groups)} samples")
-    print(f"     CRITICAL: {(test_labels == LABEL_CRITICAL).sum()} ({100 * (test_labels == LABEL_CRITICAL).mean():.1f}%)")
-    print(f"     NON_CRITICAL: {(test_labels == LABEL_NON_CRITICAL).sum()} ({100 * (test_labels == LABEL_NON_CRITICAL).mean():.1f}%)")
+    print(
+        f"     CRITICAL: {(test_labels == LABEL_CRITICAL).sum()} ({100 * (test_labels == LABEL_CRITICAL).mean():.1f}%)"
+    )
+    print(
+        f"     NON_CRITICAL: {(test_labels == LABEL_NON_CRITICAL).sum()} ({100 * (test_labels == LABEL_NON_CRITICAL).mean():.1f}%)"
+    )
 
     # Save
     print("\n4. Saving dataset...")
