@@ -21,24 +21,26 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Academic paper style configuration
-plt.rcParams.update({
-    'font.family': 'serif',
-    'font.size': 11,
-    'axes.labelsize': 12,
-    'axes.titlesize': 13,
-    'legend.fontsize': 10,
-    'xtick.labelsize': 10,
-    'ytick.labelsize': 10,
-    'axes.facecolor': '#E8E8E8',  # Light gray background
-    'axes.edgecolor': '#333333',
-    'axes.linewidth': 1.0,
-    'grid.color': 'white',
-    'grid.linewidth': 1.2,
-    'grid.linestyle': '-',
-    'figure.facecolor': 'white',
-    'savefig.facecolor': 'white',
-    'savefig.edgecolor': 'white',
-})
+plt.rcParams.update(
+    {
+        "font.family": "serif",
+        "font.size": 11,
+        "axes.labelsize": 12,
+        "axes.titlesize": 13,
+        "legend.fontsize": 10,
+        "xtick.labelsize": 10,
+        "ytick.labelsize": 10,
+        "axes.facecolor": "#E8E8E8",  # Light gray background
+        "axes.edgecolor": "#333333",
+        "axes.linewidth": 1.0,
+        "grid.color": "white",
+        "grid.linewidth": 1.2,
+        "grid.linestyle": "-",
+        "figure.facecolor": "white",
+        "savefig.facecolor": "white",
+        "savefig.edgecolor": "white",
+    }
+)
 
 BASE_DIR = Path(__file__).parent.parent.parent
 RESULTS_DIR = BASE_DIR / "results"
@@ -101,9 +103,7 @@ def extract_verification_data(data: dict) -> tuple:
 
     # Sort by epsilon
     sorted_data = sorted(zip(epsilons, rates, times))
-    return ([x[0] for x in sorted_data],
-            [x[1] for x in sorted_data],
-            [x[2] for x in sorted_data])
+    return ([x[0] for x in sorted_data], [x[1] for x in sorted_data], [x[2] for x in sorted_data])
 
 
 def get_verifier_name(data: dict) -> str:
@@ -115,7 +115,9 @@ def get_verifier_name(data: dict) -> str:
     if "eran" in verifier.lower() or "eran" in model.lower():
         domain = metadata.get("domain", "")
         return f"ERAN ({domain})" if domain else "ERAN"
-    elif "crown" in verifier.lower() or "abcrown" in verifier.lower() or "autolirpa" in model.lower():
+    elif (
+        "crown" in verifier.lower() or "abcrown" in verifier.lower() or "autolirpa" in model.lower()
+    ):
         return "α,β-CROWN"
     else:
         return verifier
@@ -143,8 +145,17 @@ def plot_single(json_path: Path, output_path: Path = None, title: str = None):
     fig.suptitle(verifier_name, fontsize=13, fontweight="bold", y=1.02)
 
     # --- Left plot: Verified Robustness ---
-    ax1.plot(epsilons, rates, "o-", linewidth=2, markersize=7, color=color,
-             markeredgecolor="white", markeredgewidth=1.2, zorder=10)
+    ax1.plot(
+        epsilons,
+        rates,
+        "o-",
+        linewidth=2,
+        markersize=7,
+        color=color,
+        markeredgecolor="white",
+        markeredgewidth=1.2,
+        zorder=10,
+    )
     ax1.axhline(y=50, color="#888888", linestyle="--", linewidth=1.2, zorder=5)
 
     ax1.set_xlabel("ε", labelpad=10)
@@ -154,18 +165,27 @@ def plot_single(json_path: Path, output_path: Path = None, title: str = None):
     ax1.grid(True, zorder=0)
 
     # Format y-axis as percentage
-    ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x)}%'))
+    ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{int(x)}%"))
 
     # Remove top and right spines
-    ax1.spines['top'].set_visible(False)
-    ax1.spines['right'].set_visible(False)
+    ax1.spines["top"].set_visible(False)
+    ax1.spines["right"].set_visible(False)
 
     # Subplot title
     ax1.set_title("Verified robustness", fontsize=11, pad=8)
 
     # --- Right plot: Time ---
-    ax2.plot(epsilons, times, "o-", linewidth=2, markersize=7, color=color,
-             markeredgecolor="white", markeredgewidth=1.2, zorder=10)
+    ax2.plot(
+        epsilons,
+        times,
+        "o-",
+        linewidth=2,
+        markersize=7,
+        color=color,
+        markeredgecolor="white",
+        markeredgewidth=1.2,
+        zorder=10,
+    )
 
     ax2.set_xlabel("ε", labelpad=10)
     ax2.set_ylabel("Time (s)")
@@ -178,8 +198,8 @@ def plot_single(json_path: Path, output_path: Path = None, title: str = None):
     ax2.grid(True, zorder=0)
 
     # Remove top and right spines
-    ax2.spines['top'].set_visible(False)
-    ax2.spines['right'].set_visible(False)
+    ax2.spines["top"].set_visible(False)
+    ax2.spines["right"].set_visible(False)
 
     # Subplot title
     ax2.set_title("Time", fontsize=11, pad=8)
@@ -187,7 +207,9 @@ def plot_single(json_path: Path, output_path: Path = None, title: str = None):
     plt.tight_layout()
 
     # Add model name below the plots (once, centered)
-    fig.text(0.5, 0.01, f"Model: {model_name}", ha='center', fontsize=9, style='italic', color='#555555')
+    fig.text(
+        0.5, 0.01, f"Model: {model_name}", ha="center", fontsize=9, style="italic", color="#555555"
+    )
 
     if output_path:
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -198,7 +220,9 @@ def plot_single(json_path: Path, output_path: Path = None, title: str = None):
     plt.close()
 
 
-def plot_comparison(json_path1: Path, json_path2: Path, output_path: Path = None, title: str = None):
+def plot_comparison(
+    json_path1: Path, json_path2: Path, output_path: Path = None, title: str = None
+):
     """Create comparison line chart for two verification results."""
     data1 = load_json_results(json_path1)
     data2 = load_json_results(json_path2)
@@ -217,10 +241,30 @@ def plot_comparison(json_path1: Path, json_path2: Path, output_path: Path = None
     fig, ax = plt.subplots(figsize=(8, 5))
 
     # Plot lines with distinct markers and colors (academic paper style)
-    ax.plot(eps1, rates1, "o-", linewidth=2, markersize=7, color="#C44E52",
-            markeredgecolor="white", markeredgewidth=1.2, label=name1, zorder=10)
-    ax.plot(eps2, rates2, "s--", linewidth=2, markersize=7, color="#4C72B0",
-            markeredgecolor="white", markeredgewidth=1.2, label=name2, zorder=10)
+    ax.plot(
+        eps1,
+        rates1,
+        "o-",
+        linewidth=2,
+        markersize=7,
+        color="#C44E52",
+        markeredgecolor="white",
+        markeredgewidth=1.2,
+        label=name1,
+        zorder=10,
+    )
+    ax.plot(
+        eps2,
+        rates2,
+        "s--",
+        linewidth=2,
+        markersize=7,
+        color="#4C72B0",
+        markeredgecolor="white",
+        markeredgewidth=1.2,
+        label=name2,
+        zorder=10,
+    )
 
     # Formatting
     ax.set_xlabel("ε", labelpad=10)
@@ -237,17 +281,17 @@ def plot_comparison(json_path1: Path, json_path2: Path, output_path: Path = None
     ax.grid(True, zorder=0)
 
     # Format y-axis as percentage
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{int(x)}%'))
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{int(x)}%"))
 
     # Remove top and right spines
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_linewidth(1.0)
-    ax.spines['bottom'].set_linewidth(1.0)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_linewidth(1.0)
+    ax.spines["bottom"].set_linewidth(1.0)
 
     # Add model names below the x-axis label
     models_text = f"Models: {model1}, {model2}"
-    fig.text(0.5, 0.01, models_text, ha='center', fontsize=9, style='italic', color='#555555')
+    fig.text(0.5, 0.01, models_text, ha="center", fontsize=9, style="italic", color="#555555")
 
     plt.tight_layout()
 
@@ -271,12 +315,20 @@ Examples:
 
   # Compare two results (line chart):
   python plot_verification_results.py --compare results/eran_verification_2.json results/abcrown_verification_2.json
-        """
+        """,
     )
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--single", type=str, metavar="JSON", help="Single JSON result file (bar chart)")
-    group.add_argument("--compare", type=str, nargs=2, metavar="JSON", help="Two JSON result files to compare (line chart)")
+    group.add_argument(
+        "--single", type=str, metavar="JSON", help="Single JSON result file (bar chart)"
+    )
+    group.add_argument(
+        "--compare",
+        type=str,
+        nargs=2,
+        metavar="JSON",
+        help="Two JSON result files to compare (line chart)",
+    )
 
     parser.add_argument("-o", "--output", type=str, help="Output path (default: auto-generated)")
     parser.add_argument("--title", type=str, help="Custom plot title")
