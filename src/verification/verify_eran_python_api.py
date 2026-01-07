@@ -51,17 +51,17 @@ print("ERAN Verification via Python API")
 print("=" * 70)
 print()
 
-# Configuration
-MODEL_PATH = BASE_DIR / "saved_models/pointnet_3dcertify_512f.pth"
-ONNX_PATH = BASE_DIR / "saved_models/pointnet_3dcertify_512f_api.onnx"
-TEST_DATA_PATH = BASE_DIR / "data/pointnet/test_groups.npy"
-TEST_LABELS_PATH = BASE_DIR / "data/pointnet/test_labels.npy"
+# Configuration - Full size model (1024 points, 1024 features)
+MODEL_PATH = BASE_DIR / "saved_models/pointnet_3dcertify_1024.pth"
+ONNX_PATH = BASE_DIR / "saved_models/pointnet_3dcertify_1024_api.onnx"
+TEST_DATA_PATH = BASE_DIR / "data/pointnet_1024/test_groups.npy"
+TEST_LABELS_PATH = BASE_DIR / "data/pointnet_1024/test_labels.npy"
 
-NUM_POINTS = 64
+NUM_POINTS = 1024
 NUM_CLASSES = 2
-MAX_FEATURES = 512  # Same as alpha-beta-CROWN for fair comparison
-N_VERIFY_SAMPLES = 100
-EPSILONS = [0.001, 0.003, 0.005, 0.007, 0.01, 0.02, 0.03]
+MAX_FEATURES = 1024
+N_VERIFY_SAMPLES = 10
+EPSILONS = [0.001, 0.003, 0.005, 0.007, 0.01, 0.02]
 DOMAIN = "deepzono"  # Fast and stable
 
 print("Configuration:")
@@ -340,5 +340,3 @@ with open(md_path, "w") as f:
 print()
 print(f"Results saved to: {json_path}")
 print(f"Markdown saved to: {md_path}")
-print()
-print("SUCCESS: Used ERAN Python API directly, bypassing CLI and ONNX translator!")

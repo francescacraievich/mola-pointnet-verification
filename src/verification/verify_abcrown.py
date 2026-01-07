@@ -243,7 +243,7 @@ def run_verification(vnnlib_path, config_path, timeout=300):
 
     cmd = [
         sys.executable,
-        str(complete_verifier_dir / "abcrown.py"),
+        "abcrown.py",
         "--config",
         str(config_path),
         "--vnnlib_path",
@@ -284,7 +284,7 @@ def main():
         "--by-margin", choices=["low", "high", "mixed"], help="Select by confidence margin"
     )
     parser.add_argument("--epsilon", type=float, nargs="+", default=[0.01, 0.03, 0.05])
-    parser.add_argument("--config", type=str, default="configs/abcrown_pointnet_complete.yaml")
+    parser.add_argument("--config", type=str, default="data/configs/abcrown_pointnet_complete.yaml")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--timeout", type=int, default=300)
     args = parser.parse_args()
