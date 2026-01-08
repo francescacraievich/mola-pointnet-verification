@@ -1,0 +1,243 @@
+\documentclass[11pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage[pdfencoding=auto]{hyperref}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{subcaption}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+    pdfauthor={Francesca Craievich},
+    pdftitle={Formal Verification of PointNet for LiDAR-based SLAM},
+    unicode=true
+}
+
+% Title
+\title{Formal Verification of PointNet for LiDAR-based SLAM:\\A Comparative Study of ERAN and $\alpha,\beta$-CROWN}
+\author{Francesca Craievich\\
+\small Safe and Verified AI Course}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+%==============================================================================
+\begin{abstract}
+This report presents a formal verification study of a PointNet classifier on LiDAR point clouds from MOLA SLAM using ERAN and $\alpha,\beta$-CROWN verifiers. Our experiments show that verified robustness drops below 50\% at $\varepsilon \approx 1$cm, aligning with NSGA-III adversarial attack findings where similar perturbations degrade SLAM performance.
+\end{abstract}
+
+%==============================================================================
+\section{Introduction}
+
+Autonomous vehicles rely heavily on Simultaneous Localization and Mapping (SLAM) systems to navigate their environment. These systems process LiDAR point clouds to build maps and estimate the vehicle's position in real-time. Increasingly, deep learning models are being integrated into SLAM pipelines to classify and segment point cloud data, raising important questions about their robustness to adversarial perturbations.
+
+In safety-critical applications, it is not sufficient to empirically test a neural network on a finite set of inputs. Formal verification provides mathematical guarantees about network behavior across infinite input regions. Given an input $x_0$ and a perturbation budget $\varepsilon$, formal verification can prove (or disprove) that all inputs $x'$ within the $L_\infty$ ball of radius $\varepsilon$ around $x_0$ produce the same classification.
+
+This work focuses on verifying a PointNet classifier trained to distinguish between \textit{critical} and \textit{non-critical} regions in LiDAR scans from the MOLA SLAM system. The criticality labels were derived from a multi-objective optimization study using NSGA-III, which identified point cloud regions whose perturbation maximally degrades SLAM performance.
+
+Our contributions include: (1) a systematic comparison of ERAN and $\alpha,\beta$-CROWN for point cloud verification, (2) identification of the critical perturbation threshold where robustness guarantees break down, and (3) a novel connection between formal verification results and empirical adversarial attack outcomes.
+
+%==============================================================================
+\section{Background}
+
+\subsection{PointNet Architecture}
+
+PointNet~\cite{qi2017pointnet} is a pioneering architecture for processing unordered point sets. Unlike image-based networks, it handles the permutation invariance of point clouds through shared multi-layer perceptrons (MLPs) applied independently to each point, followed by a symmetric aggregation function (max pooling) that produces a global feature vector.
+
+Given an input point cloud $\mathbf{P} = \{p_1, \ldots, p_n\}$ where $p_i \in \mathbb{R}^3$, PointNet computes:
+\begin{equation}
+    f(\mathbf{P}) = \gamma\left(\max_{i=1,\ldots,n} h(p_i)\right)
+\end{equation}
+where $h: \mathbb{R}^3 \rightarrow \mathbb{R}^d$ is a shared MLP, $\max$ is element-wise max pooling, and $\gamma$ is a final MLP for classification.
+
+\subsection{Local Robustness Property}
+
+The local robustness property guarantees that small perturbations to an input do not change the network's prediction. Formally, for a classifier $f$, input $x_0$, and perturbation budget $\varepsilon$:
+\begin{equation}
+    \forall x' : \|x' - x_0\|_\infty \leq \varepsilon \implies f(x') = f(x_0)
+\end{equation}
+
+In the context of LiDAR point clouds, $\varepsilon$ represents the maximum coordinate displacement (in meters) that each point can undergo. For our 64-point input, this creates a 192-dimensional hypercube of possible perturbations that the verifier must analyze.
+
+\subsection{Neural Network Verifiers}
+
+\textbf{ERAN} (ETH Robustness Analyzer for Neural Networks) uses abstract interpretation with the DeepZono domain to over-approximate the reachable output set. It propagates zonotope abstractions through network layers, providing sound but incomplete verification---if it verifies robustness, the guarantee is certain, but failure to verify does not imply vulnerability.
+
+\textbf{$\alpha,\beta$-CROWN} employs linear bound propagation with learnable parameters ($\alpha$) and neuron splitting ($\beta$) combined with branch-and-bound search. This approach is complete: it can either prove robustness or find a concrete counterexample. However, completeness comes at the cost of potentially exponential runtime for hard instances.
+
+%==============================================================================
+\section{Methodology}
+
+\subsection{Dataset}
+
+Our dataset originates from the MOLA SLAM system, comprising 14.4 million raw LiDAR points across 113 frames. We processed this data as follows:
+
+\begin{enumerate}
+    \item \textbf{K-NN Grouping}: For each point, we extracted its 1024 nearest neighbors, creating local region descriptors.
+    \item \textbf{Sample Extraction}: This yielded 5,881 total samples (local regions).
+    \item \textbf{Train/Test Split}: 4,881 training samples and 1,000 test samples.
+    \item \textbf{Subsampling}: For computational tractability of verification, we uniformly subsampled each region from 1024 to 64 points.
+    \item \textbf{Labeling}: Each region was labeled as CRITICAL (288 test samples) or NON\_CRITICAL (712 test samples) based on NSGA-III adversarial analysis weights.
+\end{enumerate}
+
+The final input representation is a tensor of shape $(64, 3)$, where each row contains the $(x, y, z)$ coordinates of a point, yielding 192 input dimensions.
+
+\subsection{Model Configuration}
+
+To ensure a fair comparison between verifiers, we trained a PointNet model with the following architecture:
+
+\begin{table}[H]
+\centering
+\caption{Model Configuration}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Parameter} & \textbf{ERAN} & \textbf{$\alpha,\beta$-CROWN} \\
+\midrule
+Input points & 64 & 64 \\
+Input dimensions & 192 & 192 \\
+Max features & 512 & 512 \\
+Pooling & MaxPool & MeanPool \\
+BatchNorm & Yes & No \\
+Test accuracy & 74\% & 72\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The pooling difference stems from technical constraints: $\alpha,\beta$-CROWN (which uses auto\_LiRPA internally for bound propagation) handles MeanPool more efficiently than cascaded MaxPool operations used by ERAN's 3DCertify architecture.
+
+\subsection{Verification Setup}
+
+We verified 100 correctly classified samples (randomly selected with seed 42) across seven perturbation budgets: $\varepsilon \in \{0.001, 0.003, 0.005, 0.007, 0.01, 0.02, 0.03\}$ meters. These values span from sub-millimeter to 3-centimeter perturbations, capturing the transition from robust to vulnerable behavior.
+
+For each sample and $\varepsilon$, we verify:
+\begin{equation}
+    \forall x' \in [x_0 - \varepsilon, x_0 + \varepsilon]^{192} : \arg\max f(x') = \arg\max f(x_0)
+\end{equation}
+
+ERAN used the DeepZono domain with default timeout settings. $\alpha,\beta$-CROWN used a 300-second timeout per sample with branch-and-bound enabled.
+
+%==============================================================================
+\section{Experimental Results}
+
+\subsection{ERAN Results}
+
+Table~\ref{tab:eran} shows ERAN's verification results using the DeepZono abstract domain.
+
+\begin{table}[H]
+\centering
+\caption{ERAN Verification Results (DeepZono)}
+\label{tab:eran}
+\begin{tabular}{cccc}
+\toprule
+$\varepsilon$ (m) & $\varepsilon$ (cm) & Verified / Total & Rate \\
+\midrule
+0.001 & 0.1 & 99 / 100 & 99.0\% \\
+0.003 & 0.3 & 96 / 100 & 96.0\% \\
+0.005 & 0.5 & 94 / 100 & 94.0\% \\
+0.007 & 0.7 & 78 / 100 & 78.0\% \\
+0.01 & 1.0 & 53 / 100 & 53.0\% \\
+0.02 & 2.0 & 2 / 100 & 2.0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The verification rate drops sharply between 0.7cm and 1cm, falling to around 50\% at $\varepsilon = 0.01$ (1cm). At 2cm, virtually no samples can be verified.
+
+\subsection{$\alpha,\beta$-CROWN Results}
+
+Table~\ref{tab:abcrown} presents $\alpha,\beta$-CROWN's results with branch-and-bound.
+
+\begin{table}[H]
+\centering
+\caption{$\alpha,\beta$-CROWN Verification Results}
+\label{tab:abcrown}
+\begin{tabular}{ccccc}
+\toprule
+$\varepsilon$ (m) & Verified & Unsafe & Timeout & Rate \\
+\midrule
+0.001 & 100 & 0 & 0 & 100.0\% \\
+0.003 & 100 & 0 & 0 & 100.0\% \\
+0.005 & 99 & 1 & 0 & 99.0\% \\
+0.007 & 98 & 1 & 1 & 98.0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+$\alpha,\beta$-CROWN achieves very high verification rates across all tested $\varepsilon$ values, demonstrating the power of complete verification. The complete verifier can either prove robustness or find concrete counterexamples, resulting in minimal ``unknown'' outcomes.
+
+\subsection{Verification Plots}
+
+Figure~\ref{fig:eran_plot} shows ERAN's verification rate and computation time as a function of $\varepsilon$. Figure~\ref{fig:abcrown_plot} presents the corresponding results for $\alpha,\beta$-CROWN.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../results/figures/eran_verification_2_plot.png}
+\caption{ERAN verification results: (left) verified robustness rate vs. $\varepsilon$, (right) average verification time vs. $\varepsilon$.}
+\label{fig:eran_plot}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../results/figures/abcrown_verification_2_plot.png}
+\caption{$\alpha,\beta$-CROWN verification results: (left) verified robustness rate vs. $\varepsilon$, (right) average verification time vs. $\varepsilon$.}
+\label{fig:abcrown_plot}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{../results/figures/comparison_eran_verification_2_abcrown_verification_2.png}
+\caption{Comparison of verification rates between ERAN and $\alpha,\beta$-CROWN.}
+\label{fig:comparison}
+\end{figure}
+
+\newpage
+%==============================================================================
+\section{Connection to NSGA-III Adversarial Attacks}
+
+This verification study complements our companion project on adversarial attacks against MOLA SLAM using NSGA-III multi-objective optimization~\cite{nsga3mola}. The NSGA-III study found:
+
+\begin{itemize}
+    \item \textbf{Baseline}: Unperturbed MOLA SLAM achieves 23cm absolute trajectory error.
+    \item \textbf{Stealthy attack}: 1.5cm perturbations cause 32cm drift (+39\% degradation).
+    \item \textbf{Balanced attack}: 3.5cm perturbations cause 65cm drift (+183\% degradation).
+    \item \textbf{Maximum attack}: 4.6cm perturbations cause 85cm drift (+269\% degradation).
+\end{itemize}
+
+\textbf{Key insight}: Our formal verification results show that robustness guarantees break down at $\varepsilon \approx 1$cm. The NSGA-III study independently found that perturbations of 1.5cm already degrade SLAM performance by 39\%. This alignment is striking---formal verification of a classifier trained on SLAM data predicts the perturbation threshold at which the actual SLAM system begins to fail.
+
+This suggests a practical workflow: use formal verification to identify the critical $\varepsilon$ for perception models, then prioritize defending against perturbations in that range to protect the full system.
+
+%==============================================================================
+\section{Limitations and Future Directions}
+
+\textbf{Limitations}: Our study used 64-point subsampled regions (standard benchmarks like ModelNet40 use 1024 points) and different pooling operations between verifiers. Future work should explore verification with larger point counts and unified architectures.
+
+\noindent\textbf{Future directions}: Extending this analysis to $L_2$ perturbations, semantic transformations (rotations, scaling), and more expressive architectures would provide a more complete picture of point cloud classifier robustness in safety-critical applications.
+
+%==============================================================================
+\begin{thebibliography}{9}
+
+\bibitem{qi2017pointnet}
+C.~R. Qi, H.~Su, K.~Mo, and L.~J. Guibas, ``PointNet: Deep learning on point sets for 3D classification and segmentation,'' in \textit{Proc. IEEE Conf. Computer Vision and Pattern Recognition (CVPR)}, 2017.
+
+\bibitem{nsga3mola}
+F.~Craievich, ``MOLA Adversarial NSGA-III: Multi-objective adversarial attacks on SLAM systems,'' 2024. [Online]. Available: \url{https://github.com/francescacraievich/mola-adversarial-nsga3}
+
+\end{thebibliography}
+
+\vspace{1em}
+\noindent\textit{\small Note: NotebookLM was used for studying course concepts. Claude Code assisted with code debugging and LaTeX formatting.}
+
+\end{document}

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Train PointNet with 3DCertify architecture using 64 points (like their examples).
+Train PointNet with 3DCertify architecture using 64 points 
 This matches the model used in 3DCertify paper experiments.
 """
 
@@ -96,6 +96,7 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
 
 # Training loop
 def train_epoch(epoch):
+    """Run one training epoch: forward pass, backprop, and weight update for all batches."""
     model.train()
     total_loss = 0
     correct = 0

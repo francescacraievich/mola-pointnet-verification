@@ -1,29 +1,25 @@
 """
-Data Preparation for PointNet Classification (GPU + Parallel).
+Data Preparation for PointNet Classification.
 
 Creates groups of N points from LiDAR frames for PointNet training.
-Uses PyTorch GPU for fast eigenvalue computation and multiprocessing for frames.
+Uses multiprocessing for parallel frame processing (CPU-based).
 
-Feature-Augmented Input Strategy:
-Instead of hard-coding weights, we include geometric features as extra input channels
-so the network can learn the optimal weighting during training.
-
-Input format: (N, 7) where channels are:
-- [0:3] xyz coordinates (normalized)
+Output format: (N, 7) where channels are:
+- [0:3] xyz coordinates (normalized) - USED BY MODEL
 - [3] linearity - edge/line feature strength
 - [4] curvature - surface curvature
-- [5] density_var - local density variation (scanline attack vulnerability)
+- [5] density_var - local density variation
 - [6] planarity - how planar the neighborhood is
 
-Labels:
-- CRITICAL (0): Regions with high SLAM vulnerability (learned from geometric features)
-- NON_CRITICAL (1): Regions with low SLAM vulnerability
+NOTE: The model only uses xyz (channels 0:3). Geometric features (channels 3:7)
+are stored for reference but are used ONLY for label computation via NSGA-III weights.
 
-The features are derived from NSGA-III adversarial attack analysis:
-- Curvature targeting: targets high-curvature points
-- Scanline perturbation: exploits density variations
-- Edge attack: targets edges/corners
-- Temporal drift: affects structured regions
+Labels are computed using NSGA-III Pareto-optimal weights:
+- CRITICAL (0): Regions with high SLAM vulnerability (score >= 0.5)
+- NON_CRITICAL (1): Regions with low SLAM vulnerability (score < 0.5)
+
+Criticality score = linearity * w1 + curvature * w2 + density_var * w3 + nonplanarity * w4
+Weights derived from NSGA-III adversarial attack analysis.
 """
 
 import argparse
@@ -37,9 +33,9 @@ import torch
 from scipy.spatial import cKDTree
 
 # Import NSGA-III integration for dynamic weights
-from scripts.nsga3_integration import get_criticality_weights
+from scripts.nsga3_integration import compute_criticality_score, get_criticality_weights
 
-# Use GPU if available
+# Device for sequential mode (parallel mode uses CPU via multiprocessing)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_WORKERS = min(mp.cpu_count(), 8)  # Limit workers
 
@@ -57,9 +53,10 @@ def load_frame_sequence(data_path: Path) -> np.ndarray:
 
 def compute_local_features_gpu(points: np.ndarray, k: int = 10) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Compute local geometric features using GPU acceleration.
+    Compute local geometric features using PyTorch (GPU if available).
 
-    Uses batched eigenvalue computation on GPU for speed.
+    Uses batched eigenvalue computation for speed.
+    Only used in sequential mode; parallel mode uses compute_local_features_cpu.
     """
     n = len(points)
     xyz = points[:, :3]
@@ -73,7 +70,7 @@ def compute_local_features_gpu(points: np.ndarray, k: int = 10) -> Tuple[np.ndar
         sample_idx = np.arange(n)
         xyz_sample = xyz
 
-    # Build KD-tree on CPU (scipy is fast for this)
+    # Build KD-tree on CPU 
     tree = cKDTree(xyz_sample)
     _, neighbors_idx = tree.query(xyz_sample, k=min(k + 1, len(xyz_sample)))
 
@@ -99,7 +96,7 @@ def compute_local_features_gpu(points: np.ndarray, k: int = 10) -> Tuple[np.ndar
         # cov = X^T @ X / (n-1)
         batch_cov = torch.bmm(batch_centered.transpose(1, 2), batch_centered) / (k - 1)
 
-        # Compute eigenvalues on GPU
+        # Compute eigenvalues 
         eigvals = torch.linalg.eigvalsh(batch_cov)  # (batch, 3), ascending order
         eigvals = eigvals.flip(dims=[1])  # Descending order
 
@@ -206,20 +203,13 @@ def process_single_frame(args: Tuple) -> Tuple[np.ndarray, np.ndarray]:
             ]
         )
 
-        # Compute criticality score using mean features
-        # Let the network learn the actual weights, this is just for labeling
-        mean_linearity = group_linearity.mean()
-        mean_curvature = group_curvature.mean()
-        mean_density_var = group_density_var.mean()
-        mean_nonplanarity = 1.0 - group_planarity.mean()
-
-        # Use NSGA3-derived weights (passed as parameter)
-        # These are dynamically loaded from Pareto set analysis
-        criticality_score = (
-            mean_linearity * weights["linearity"]
-            + mean_curvature * weights["curvature"]
-            + mean_density_var * weights["density_var"]
-            + mean_nonplanarity * weights["nonplanarity"]
+        # Compute criticality score using NSGA3-derived weights
+        criticality_score = compute_criticality_score(
+            linearity=group_linearity.mean(),
+            curvature=group_curvature.mean(),
+            density_var=group_density_var.mean(),
+            planarity=group_planarity.mean(),
+            weights=weights,
         )
 
         groups.append(group)
@@ -233,7 +223,6 @@ def process_single_frame(args: Tuple) -> Tuple[np.ndarray, np.ndarray]:
 
     # Use absolute threshold instead of median to preserve natural NSGA3 distribution
     # Features are normalized to [0,1], weights sum to ~1.0, so scores are in [0,1]
-    # Threshold of 0.5 represents regions with above-average criticality
     threshold = 0.5
     labels = np.where(scores >= threshold, LABEL_CRITICAL, LABEL_NON_CRITICAL)
 
@@ -247,11 +236,6 @@ def compute_local_features_cpu(
     CPU version for parallel processing in subprocesses.
     Uses numpy for compatibility with multiprocessing.
 
-    Returns:
-        linearity: Edge/line feature strength
-        curvature: Surface curvature
-        density_var: Local density variation (scanline vulnerability)
-        planarity: How planar the local neighborhood is
     """
     n = len(points)
     xyz = points[:, :3]
@@ -294,25 +278,20 @@ def compute_local_features_cpu(
             except Exception:
                 pass
 
+    # If subsampled, propagate features to all points via nearest neighbor
+    # Each point gets the features of its closest point in the subsample
     if n > max_points:
-        full_linearity = np.zeros(n)
-        full_curvature = np.zeros(n)
-        full_planarity = np.zeros(n)
-        full_density_var = np.zeros(n)
         _, nearest = tree.query(xyz, k=1)
-        full_linearity = linearity[nearest]
-        full_curvature = curvature[nearest]
-        full_planarity = planarity[nearest]
-        full_density_var = density_var[nearest]
-        return full_linearity, full_curvature, full_density_var, full_planarity
+        return linearity[nearest], curvature[nearest], density_var[nearest], planarity[nearest]
 
     return linearity, curvature, density_var, planarity
 
 
 def extract_point_groups(
     frame: np.ndarray,
-    n_points: int = 1024,  # Original PointNet uses 1024 points
+    n_points: int = 1024,
     n_samples: int = 100,
+    weights: dict = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Extract groups of N points from a frame with geometric features.
@@ -328,7 +307,7 @@ def extract_point_groups(
 
     xyz = frame[:, :3]
 
-    # Compute features with GPU acceleration
+    # Compute features (uses GPU if available, only in sequential mode)
     linearity, curvature = compute_local_features_gpu(frame, k=15)
 
     # Compute density variation (need distances from GPU function)
@@ -403,17 +382,13 @@ def extract_point_groups(
             ]
         )
 
-        # NSGA3-derived criticality score for labeling
-        mean_linearity = group_linearity.mean()
-        mean_curvature = group_curvature.mean()
-        mean_density_var = group_density_var.mean()
-        mean_nonplanarity = 1.0 - group_planarity.mean()
-
-        criticality_score = (
-            mean_linearity * 0.0
-            + mean_curvature * 0.1057
-            + mean_density_var * 0.2369
-            + mean_nonplanarity * 0.6574
+        # Compute criticality score using NSGA3-derived weights
+        criticality_score = compute_criticality_score(
+            linearity=group_linearity.mean(),
+            curvature=group_curvature.mean(),
+            density_var=group_density_var.mean(),
+            planarity=group_planarity.mean(),
+            weights=weights,
         )
 
         groups.append(group)
@@ -427,7 +402,7 @@ def extract_point_groups(
 
     # Use absolute threshold instead of median to preserve natural NSGA3 distribution
     # Features are normalized to [0,1], weights sum to ~1.0, so scores are in [0,1]
-    # Threshold of 0.5 represents regions with above-average criticality
+   
     threshold = 0.5
     labels = np.where(scores >= threshold, LABEL_CRITICAL, LABEL_NON_CRITICAL)
 
@@ -447,8 +422,8 @@ def prepare_pointnet_dataset(
     np.random.seed(seed)
 
     print("=" * 60)
-    print("Preparing PointNet Dataset (GPU + Parallel)")
-    print(f"Device: {DEVICE}, Workers: {NUM_WORKERS}")
+    print("Preparing PointNet Dataset")
+    print(f"Workers: {NUM_WORKERS} (parallel mode uses CPU)")
     print("=" * 60)
 
     # Load frames
@@ -484,6 +459,8 @@ def prepare_pointnet_dataset(
                 executor.submit(process_single_frame, args): i for i, args in enumerate(args_list)
             }
 
+            # Collect results as they complete (not necessarily in order).
+            # as_completed() yields futures as soon as they finish
             completed = 0
             for future in as_completed(futures):
                 completed += 1
@@ -507,6 +484,7 @@ def prepare_pointnet_dataset(
                 frame,
                 n_points=n_points,
                 n_samples=samples_per_frame,
+                weights=weights,
             )
 
             if len(groups) > 0:
@@ -525,7 +503,7 @@ def prepare_pointnet_dataset(
     all_groups = all_groups[shuffle_idx]
     all_labels = all_labels[shuffle_idx]
 
-    # Split preserving natural NSGA3 distribution (no forced balancing)
+    # Split preserving natural NSGA3 distribution 
     print("\n3. Creating train/test split (preserving NSGA3 distribution)...")
 
     # Simple train/test split maintaining natural class distribution

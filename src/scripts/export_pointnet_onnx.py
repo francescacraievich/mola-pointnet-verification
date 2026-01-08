@@ -68,7 +68,8 @@ def export_pointnet_onnx(
     wrapped_model.eval()
 
     # Create dummy input - flattened for ONNX
-    # Input shape: (batch, n_points * 3) = (batch, 1536) for 512 points
+    # # Input shape: (batch, n_points * 3) = (batch, 192) for 64 points
+
     dummy_input = torch.randn(1, n_points * 3)
 
     print(f"\n2. Exporting to ONNX...")
@@ -103,7 +104,8 @@ def export_pointnet_onnx(
     print(f"   Inputs: {[i.name for i in onnx_model.graph.input]}")
     print(f"   Outputs: {[o.name for o in onnx_model.graph.output]}")
 
-    # Test inference
+    # Test inference: run the exported model on dummy data to verify
+    # that the ONNX export works correctly before using it with α,β-CROWN.
     print("\n5. Testing inference...")
     import onnxruntime as ort
 

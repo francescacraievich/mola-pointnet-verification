@@ -7,8 +7,7 @@ This follows 3DCertify's approach exactly:
 2. Export to ONNX using 3DCertify's onnx_converter
 3. Create EranVerifier with ONNX model object
 4. Call analyze_classification_box() directly
-
-This bypasses ERAN's CLI and ONNX translator, avoiding the 4D shape issue.
+5. Verify on a selection of correctly classified test samples
 """
 
 import sys
@@ -51,13 +50,13 @@ print("ERAN Verification via Python API")
 print("=" * 70)
 print()
 
-# Configuration - Full size model (1024 points, 1024 features)
-MODEL_PATH = BASE_DIR / "saved_models/pointnet_3dcertify_1024.pth"
-ONNX_PATH = BASE_DIR / "saved_models/pointnet_3dcertify_1024_api.onnx"
-TEST_DATA_PATH = BASE_DIR / "data/pointnet_1024/test_groups.npy"
-TEST_LABELS_PATH = BASE_DIR / "data/pointnet_1024/test_labels.npy"
+# Configuration - Small model (64 points, 1024 features) for faster verification
+MODEL_PATH = BASE_DIR / "saved_models/pointnet_3dcertify_64p.pth"
+ONNX_PATH = BASE_DIR / "saved_models/pointnet_3dcertify_64p_api.onnx"
+TEST_DATA_PATH = BASE_DIR / "data/pointnet/test_groups.npy"
+TEST_LABELS_PATH = BASE_DIR / "data/pointnet/test_labels.npy"
 
-NUM_POINTS = 1024
+NUM_POINTS = 64
 NUM_CLASSES = 2
 MAX_FEATURES = 1024
 N_VERIFY_SAMPLES = 10
@@ -83,7 +82,7 @@ torch_model = PointNet(
     max_features=MAX_FEATURES,
     pool_function="improved_max",
     disable_assertions=True,
-    transposed_input=True,  # 3DCertify uses transposed_input=True
+    transposed_input=True,  
 )
 torch_model.load_state_dict(checkpoint["model_state_dict"])
 torch_model = torch_model.eval()
@@ -94,7 +93,7 @@ onnx_model = onnx_converter.convert(torch_model, NUM_POINTS, ONNX_PATH)
 print(f"  ONNX exported to {ONNX_PATH}")
 print()
 
-# Initialize ERAN with Python API (not CLI!)
+# Initialize ERAN with Python API 
 print("Initializing ERAN via Python API...")
 
 
@@ -212,7 +211,7 @@ for eps in EPSILONS:
 
         start = timer()
         try:
-            # This is the key - use Python API directly!
+            # Use Python API
             (dominant_class, nlb, nub) = eran.analyze_classification_box(
                 Interval(lower_bound, upper_bound)
             )

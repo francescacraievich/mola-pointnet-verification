@@ -50,3 +50,13 @@ venv38/
 
 # Large binary files
 *.tar.gz
+
+# LaTeX auxiliary files
+*.aux
+*.fdb_latexmk
+*.fls
+*.out
+*.synctex.gz
+*.toc
+*.bbl
+*.blg

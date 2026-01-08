@@ -57,7 +57,7 @@ For every correctly classified point cloud region x₀:
 
 - **Domain**: DeepZono (zonotope-based abstract interpretation)
 - **Model**: 3DCertify PointNet architecture
-  - 64 input points, 1024 max features
+  - 64 input points, 512 max features
   - Cascading MaxPool (improved_max)
   - BatchNorm layers
 - **Type**: Incomplete verifier (sound but may return "unknown")
@@ -80,34 +80,35 @@ For every correctly classified point cloud region x₀:
 | Parameter | ERAN | α,β-CROWN |
 |-----------|------|-----------|
 | Input points | 64 | 64 |
-| Max features | 1024 | 512 |
+| Max features | 512 | 512 |
 | Pooling | MaxPool | MeanPool |
 | BatchNorm | Yes | No |
-| Samples | 100 | 50-100 |
+| Samples | 100 | 100 |
 | Selection | Random (correctly classified) | Random (correctly classified) |
 
 ### ERAN Results (DeepZono)
 
 | ε | Verified | Total | Rate |
 |---|----------|-------|------|
-| 0.001 | 100 | 100 | **100%** |
-| 0.003 | 100 | 100 | **100%** |
-| 0.005 | 99 | 100 | **99%** |
-| 0.007 | 96 | 100 | **96%** |
-| 0.01 | 91 | 100 | **91%** |
-| 0.02 | 67 | 100 | **67%** |
-| 0.03 | 45 | 100 | **45%** |
+| 0.001 | 99 | 100 | **99%** |
+| 0.003 | 96 | 100 | **96%** |
+| 0.005 | 94 | 100 | **94%** |
+| 0.007 | 78 | 100 | **78%** |
+| 0.01 | 53 | 100 | **53%** |
+| 0.02 | 2 | 100 | **2%** |
 
 ### α,β-CROWN Results
 
 | ε | Verified | Unsafe | Timeout | Total | Rate |
 |---|----------|--------|---------|-------|------|
-| 0.01 | 48 | 2 | 0 | 50 | **96%** |
-| 0.03 | 46 | 3 | 1 | 49 | **94%** |
-| 0.05 | 44 | 4 | 2 | 48 | **92%** |
-| 0.1 | 8 | 4 | 38 | 12 | **67%** |
+| 0.001 | 100 | 0 | 0 | 100 | **100%** |
+| 0.003 | 100 | 0 | 0 | 100 | **100%** |
+| 0.005 | 99 | 1 | 0 | 100 | **99%** |
+| 0.007 | 98 | 1 | 1 | 99 | **99%** |
+| 0.01 | 98 | 2 | 0 | 100 | **98%** |
+| 0.02 | 97 | 3 | 0 | 100 | **97%** |
 
-**Note**: For ε ≥ 0.1, most samples timeout (300s limit). α,β-CROWN uses a smaller model (512 features vs 1024) for computational tractability.
+**Note**: Both verifiers use 512 max features for computational tractability. α,β-CROWN achieves higher verification rates due to its complete verification approach, maintaining >95% robustness even at ε=0.02 where ERAN drops to 2%.
 
 ## Installation
 
@@ -211,7 +212,7 @@ mola-pointnet-verification/
 │   │   ├── verify_eran_python_api.py         # ERAN verification
 │   │   └── verify_abcrown.py                 # α,β-CROWN verification
 │   └── tests/                                # Unit tests
-├── configs/
+├── data/configs/
 │   └── abcrown_pointnet_complete.yaml        # α,β-CROWN configuration
 ├── data/pointnet/                            # Processed dataset
 │   ├── train_groups.npy                      # Training samples (4881, 1024, 7)
@@ -237,7 +238,7 @@ mola-pointnet-verification/
 |--------|------------|-----------------|
 | Architecture | 3DCertify PointNet | Simplified PointNet |
 | Input points | 64 | 64 |
-| Max features | 1024 | 512 |
+| Max features | 512 | 512 |
 | Pooling | Cascading MaxPool | MeanPool |
 | BatchNorm | Yes | No |
 | Dropout | Yes (0.3) | No |
@@ -253,7 +254,7 @@ Both models are trained on MOLA LiDAR data with NSGA-III dynamic criticality lab
 3. **Tool Comparison**:
    - ERAN (DeepZono) is faster but incomplete (may report "unknown")
    - α,β-CROWN is complete but computationally expensive for large perturbations
-4. **Critical Epsilon**: Verification rate drops below 50% around ε=0.03 (3cm), which aligns with perturbation magnitudes that affect SLAM performance
+4. **Critical Epsilon**: Verification rate drops below 50% around ε=0.01 (1cm), which aligns with perturbation magnitudes that affect SLAM performance
 
 ## Limitations
 

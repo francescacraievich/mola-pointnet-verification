@@ -1,32 +1,32 @@
 # ============================================================================
-# α,β-CROWN Configuration for PointNet Verification - OPTIMIZED
+# α,β-CROWN Configuration for PointNet Verification 
 # Based on official VNN-COMP configuration format
 # Documentation: https://github.com/Verified-Intelligence/alpha-beta-CROWN
 #
-# MEMORY OPTIMIZATIONS for limited GPU (3.65GB):
+# MEMORY OPTIMIZATIONS (runs on CPU by default):
 # - Sparse alpha and intermediate bounds
 # - Small batch sizes
 # - Aggressive pruning
-# - CPU fallback for specifications
 # - Branch-and-bound with timeout
+# Change device to 'cuda' if you have a GPU with >8GB VRAM
 # ============================================================================
 
 general:
-  device: cpu                     # Use CPU to avoid GPU OOM (change to cuda if > 8GB GPU)
+  device: cpu                     
   seed: 100                       # Random seed for reproducibility
   conv_mode: matrix               # "matrix" mode supports Conv1d (patches doesn't)
   deterministic: false
   double_fp: false
   loss_reduction_func: sum
-  sparse_alpha: true              # CRITICAL: Use sparse alpha to save memory
-  sparse_interm: true             # CRITICAL: Use sparse intermediate bounds
+  sparse_alpha: true              # Use sparse alpha to save memory
+  sparse_interm: true             #  Use sparse intermediate bounds
   save_adv_example: false
   precompile_jit: false
   complete_verifier: bab          # Branch-and-bound with beta-CROWN
   enable_incomplete_verification: true  # Enable α-CROWN first
   results_file: /home/francesca/mola-pointnet-verification/results/abcrown_results.txt
   root_path: /home/francesca/mola-pointnet-verification
-  store_all_specs_on_cpu: true    # MEMORY: Store specs on CPU
+  store_all_specs_on_cpu: true    # Store specs on CPU
 
 model:
   onnx_path: /home/francesca/mola-pointnet-verification/saved_models/pointnet_autolirpa_flat.onnx
@@ -49,26 +49,26 @@ specification:
   vnnlib_path: /home/francesca/mola-pointnet-verification/specs/spec_autolirpa_sample521_eps0.05.vnnlib
 
 solver:
-  batch_size: 64                  # MEMORY: Small batch size for limited GPU
-  auto_enlarge_batch_size: false  # MEMORY: Don't auto-enlarge
+  batch_size: 64                  # Small batch size for limited GPU
+  auto_enlarge_batch_size: false  # Don't auto-enlarge
   min_batch_size_ratio: 0.1
   use_float64_in_last_iteration: false
   early_stop_patience: 5          # Early stop sooner to save time
   bound_prop_method: alpha-crown  # Use α-CROWN for bound propagation
   prune_after_crown: true
-  build_batch_size: 1000          # MEMORY: Limit specs to handle at once
+  build_batch_size: 1000          # Limit specs to handle at once
 
   crown:
-    batch_size: 10000             # MEMORY: Smaller batched CROWN size
-    max_crown_size: 10000         # MEMORY: Limit max CROWN output size
+    batch_size: 10000             #  Smaller batched CROWN size
+    max_crown_size: 10000         # Limit max CROWN output size
 
   alpha-crown:
     alpha: true
     lr_alpha: 0.1                 # Learning rate for alpha
     iteration: 100                # More iterations for tighter bounds
-    share_alphas: true            # MEMORY: Share alphas to save memory
+    share_alphas: true            # Share alphas to save memory
     lr_decay: 0.99                # Slower decay for better convergence
-    full_conv_alpha: false        # MEMORY: Don't use full conv alpha
+    full_conv_alpha: false        # Don't use full conv alpha
     max_time: 0.8                 # Allow more time for alpha optimization
 
   beta-crown:
@@ -90,11 +90,11 @@ bab:
   pruning_in_iteration_ratio: 0.2 # Balance between pruning and exploration
   batched_domain_list: true
   tree_traversal: depth_first
-  hugetensor_allocator: true      # MEMORY: Use huge tensor allocator
+  hugetensor_allocator: true      # Use huge tensor allocator
   interm_transfer: true           # Transfer intermediate bounds between domains
 
   cut:
-    enabled: false                # MEMORY: Disable cutting planes (memory intensive)
+    enabled: false                # Disable cutting planes (memory intensive)
     bab_cut: false
 
   branching:
@@ -115,9 +115,9 @@ bab:
 attack:
   general_attack: false           # DISABLED: Use only α,β-CROWN verification
   pgd_order: before               # Run attack before verification
-  pgd_steps: 50                   # SPEED: Fewer PGD iterations (was 100)
-  pgd_restarts: 10                # SPEED: Fewer restarts (was 30)
-  pgd_batch_size: 1000            # MEMORY: Smaller batch size
+  pgd_steps: 50                   # Fewer PGD iterations (was 100)
+  pgd_restarts: 10                # Fewer restarts (was 30)
+  pgd_batch_size: 1000            # Smaller batch size
   pgd_early_stop: true
   pgd_lr_decay: 0.99
   pgd_alpha: auto

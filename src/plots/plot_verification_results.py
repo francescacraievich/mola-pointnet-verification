@@ -3,10 +3,10 @@
 Plot verification results for ERAN and/or α,β-CROWN.
 
 Usage:
-  # Single result (bar chart):
+  # Single result:
   python plot_verification_results.py --single results/eran_verification_2.json
 
-  # Compare two results (line chart):
+  # Compare two results:
   python plot_verification_results.py --compare results/eran_verification_2.json results/abcrown_verification_2.json
 
   # Specify output path:
@@ -20,7 +20,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Academic paper style configuration
+
 plt.rcParams.update(
     {
         "font.family": "serif",
@@ -141,10 +141,10 @@ def plot_single(json_path: Path, output_path: Path = None, title: str = None):
     # Create figure with two subplots side by side
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.5))
 
-    # Add main title with verifier name (once, at the top)
+    # Add main title with verifier name 
     fig.suptitle(verifier_name, fontsize=13, fontweight="bold", y=1.02)
 
-    # --- Left plot: Verified Robustness ---
+    #Left plot: Verified Robustness
     ax1.plot(
         epsilons,
         rates,
@@ -174,7 +174,7 @@ def plot_single(json_path: Path, output_path: Path = None, title: str = None):
     # Subplot title
     ax1.set_title("Verified robustness", fontsize=11, pad=8)
 
-    # --- Right plot: Time ---
+    #  Right plot: Time 
     ax2.plot(
         epsilons,
         times,
@@ -206,7 +206,7 @@ def plot_single(json_path: Path, output_path: Path = None, title: str = None):
 
     plt.tight_layout()
 
-    # Add model name below the plots (once, centered)
+    # Add model name below the plots 
     fig.text(
         0.5, 0.01, f"Model: {model_name}", ha="center", fontsize=9, style="italic", color="#555555"
     )
@@ -240,7 +240,7 @@ def plot_comparison(
     # Create figure with academic style
     fig, ax = plt.subplots(figsize=(8, 5))
 
-    # Plot lines with distinct markers and colors (academic paper style)
+    # Plot lines 
     ax.plot(
         eps1,
         rates1,
@@ -310,24 +310,24 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Single result (bar chart):
+  # Single result:
   python plot_verification_results.py --single results/eran_verification_2.json
 
-  # Compare two results (line chart):
+  # Compare two results:
   python plot_verification_results.py --compare results/eran_verification_2.json results/abcrown_verification_2.json
         """,
     )
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
-        "--single", type=str, metavar="JSON", help="Single JSON result file (bar chart)"
+        "--single", type=str, metavar="JSON", help="Single JSON result files"
     )
     group.add_argument(
         "--compare",
         type=str,
         nargs=2,
         metavar="JSON",
-        help="Two JSON result files to compare (line chart)",
+        help="Two JSON result files to compare",
     )
 
     parser.add_argument("-o", "--output", type=str, help="Output path (default: auto-generated)")
@@ -335,7 +335,7 @@ Examples:
 
     args = parser.parse_args()
 
-    # Create output directory (results/figures to avoid conflict with src/plots)
+    # Create output directory
     FIGURES_DIR.mkdir(exist_ok=True)
 
     if args.single:

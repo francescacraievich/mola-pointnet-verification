@@ -32,27 +32,54 @@ def get_nsga3_weights():
 
 
 def compute_geometric_features(points, k=15):
-    """Compute geometric features for a group of points."""
+    """
+    Compute geometric features from eigenvalues of the covariance matrix.
+
+    Based on Weinmann et al. (2015) "Semantic point cloud interpretation
+    based on optimal neighborhoods, relevant features and efficient classifiers".
+
+    The eigenvalues e1 >= e2 >= e3 represent the variance along the 3 principal axes:
+    - e1: variance along the direction of maximum spread
+    - e2: variance along the second principal direction
+    - e3: variance along the direction of minimum spread
+
+    Returns:
+        linearity: High when points form a LINE (e1 >> e2 ≈ e3)
+                   Example: edges, poles, cables
+        curvature: High when points are scattered in 3D (e1 ≈ e2 ≈ e3)
+                   Example: corners, vegetation, complex objects
+        density_var: Measures how uniformly distributed the points are
+                     High = irregular spacing, Low = uniform spacing
+        planarity: High when points lie on a PLANE (e1 ≈ e2 >> e3)
+                   Example: walls, floors, roofs
+    """
     if len(points) < 4:
         return 0.0, 0.0, 0.0, 1.0
 
     xyz = points[:, :3] if points.shape[1] > 3 else points
 
-    # Covariance-based features
+    # Compute covariance matrix of centered points
     centered = xyz - xyz.mean(axis=0)
     cov = np.cov(centered.T)
 
     try:
+        # Eigenvalues of covariance = variance along principal axes
         eigenvalues = np.linalg.eigvalsh(cov)
-        eigenvalues = np.sort(eigenvalues)[::-1]
+        eigenvalues = np.sort(eigenvalues)[::-1]  # Sort descending: e1 >= e2 >= e3
         e1, e2, e3 = eigenvalues[0], eigenvalues[1], eigenvalues[2]
 
         total = e1 + e2 + e3 + 1e-10
+
+        # Linearity: (e1 - e2) / e1 - high if one direction dominates (line-like)
         linearity = (e1 - e2) / (e1 + 1e-10)
+
+        # Planarity: (e2 - e3) / e1 - high if two directions dominate (plane-like)
         planarity = (e2 - e3) / (e1 + 1e-10)
+
+        # Curvature (sphericity): e3 / sum - high if all directions equal (scattered)
         curvature = e3 / total
 
-        # Density variance
+        # Density variance: how irregular is the point spacing?
         distances = np.linalg.norm(centered, axis=1)
         density_var = np.var(distances) / (np.mean(distances) + 1e-10)
 
@@ -81,8 +108,7 @@ def compute_criticality_score(points, weights, penalize_floor=True):
     )
 
     if penalize_floor:
-        # Penalize flat floor regions: low Z variance + high planarity
-        z_var = np.var(xyz[:, 2])
+        # Penalize flat floor regions: low Z range + high planarity
         z_range = xyz[:, 2].max() - xyz[:, 2].min()
 
         # Floor detection: small Z range AND high planarity
@@ -325,7 +351,7 @@ def create_comparison_animation(n_samples=20, interval=800, save_path=None, max_
         ax1.scatter(raw_pc[:, 0], raw_pc[:, 1], raw_pc[:, 2], c="dimgray", s=2, alpha=0.35)
         ax2.scatter(raw_pc[:, 0], raw_pc[:, 1], raw_pc[:, 2], c="dimgray", s=2, alpha=0.35)
 
-        # CRITICAL sample (left) - smaller but bright
+        # CRITICAL sample 
         crit_idx = critical_idx[frame]
         crit_sample = test_groups[crit_idx][:, :3]
         ax1.scatter(
@@ -340,7 +366,7 @@ def create_comparison_animation(n_samples=20, interval=800, save_path=None, max_
         )
         setup_ax(ax1, f"CRITICAL - Sample #{crit_idx}", "red")
 
-        # NON_CRITICAL sample (right) - smaller but bright
+        # NON_CRITICAL sample 
         non_crit_idx = non_critical_idx[frame]
         non_crit_sample = test_groups[non_crit_idx][:, :3]
         ax2.scatter(
