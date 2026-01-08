@@ -7,7 +7,7 @@ Key changes for auto_LiRPA compatibility:
 2. NO dynamic reshape with -1 - use explicit dimensions
 3. Use nn.Flatten with start_dim=1 instead of view/reshape
 4. Use torch.mean() instead of MaxPool (more stable for bounds)
-5. Remove Dropout 
+5. Remove Dropout
 6. Keep all operations differentiable and traceable
 """
 

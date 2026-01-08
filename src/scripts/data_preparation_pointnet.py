@@ -70,7 +70,7 @@ def compute_local_features_gpu(points: np.ndarray, k: int = 10) -> Tuple[np.ndar
         sample_idx = np.arange(n)
         xyz_sample = xyz
 
-    # Build KD-tree on CPU 
+    # Build KD-tree on CPU
     tree = cKDTree(xyz_sample)
     _, neighbors_idx = tree.query(xyz_sample, k=min(k + 1, len(xyz_sample)))
 
@@ -96,7 +96,7 @@ def compute_local_features_gpu(points: np.ndarray, k: int = 10) -> Tuple[np.ndar
         # cov = X^T @ X / (n-1)
         batch_cov = torch.bmm(batch_centered.transpose(1, 2), batch_centered) / (k - 1)
 
-        # Compute eigenvalues 
+        # Compute eigenvalues
         eigvals = torch.linalg.eigvalsh(batch_cov)  # (batch, 3), ascending order
         eigvals = eigvals.flip(dims=[1])  # Descending order
 
@@ -402,7 +402,7 @@ def extract_point_groups(
 
     # Use absolute threshold instead of median to preserve natural NSGA3 distribution
     # Features are normalized to [0,1], weights sum to ~1.0, so scores are in [0,1]
-   
+
     threshold = 0.5
     labels = np.where(scores >= threshold, LABEL_CRITICAL, LABEL_NON_CRITICAL)
 
@@ -503,7 +503,7 @@ def prepare_pointnet_dataset(
     all_groups = all_groups[shuffle_idx]
     all_labels = all_labels[shuffle_idx]
 
-    # Split preserving natural NSGA3 distribution 
+    # Split preserving natural NSGA3 distribution
     print("\n3. Creating train/test split (preserving NSGA3 distribution)...")
 
     # Simple train/test split maintaining natural class distribution

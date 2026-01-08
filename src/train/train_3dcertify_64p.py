@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Train PointNet with 3DCertify architecture using 64 points 
+Train PointNet with 3DCertify architecture using 64 points
 This matches the model used in 3DCertify paper experiments.
 """
 

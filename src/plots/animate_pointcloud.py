@@ -351,7 +351,7 @@ def create_comparison_animation(n_samples=20, interval=800, save_path=None, max_
         ax1.scatter(raw_pc[:, 0], raw_pc[:, 1], raw_pc[:, 2], c="dimgray", s=2, alpha=0.35)
         ax2.scatter(raw_pc[:, 0], raw_pc[:, 1], raw_pc[:, 2], c="dimgray", s=2, alpha=0.35)
 
-        # CRITICAL sample 
+        # CRITICAL sample
         crit_idx = critical_idx[frame]
         crit_sample = test_groups[crit_idx][:, :3]
         ax1.scatter(
@@ -366,7 +366,7 @@ def create_comparison_animation(n_samples=20, interval=800, save_path=None, max_
         )
         setup_ax(ax1, f"CRITICAL - Sample #{crit_idx}", "red")
 
-        # NON_CRITICAL sample 
+        # NON_CRITICAL sample
         non_crit_idx = non_critical_idx[frame]
         non_crit_sample = test_groups[non_crit_idx][:, :3]
         ax2.scatter(

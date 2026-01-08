@@ -141,10 +141,10 @@ def plot_single(json_path: Path, output_path: Path = None, title: str = None):
     # Create figure with two subplots side by side
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.5))
 
-    # Add main title with verifier name 
+    # Add main title with verifier name
     fig.suptitle(verifier_name, fontsize=13, fontweight="bold", y=1.02)
 
-    #Left plot: Verified Robustness
+    # Left plot: Verified Robustness
     ax1.plot(
         epsilons,
         rates,
@@ -174,7 +174,7 @@ def plot_single(json_path: Path, output_path: Path = None, title: str = None):
     # Subplot title
     ax1.set_title("Verified robustness", fontsize=11, pad=8)
 
-    #  Right plot: Time 
+    #  Right plot: Time
     ax2.plot(
         epsilons,
         times,
@@ -206,7 +206,7 @@ def plot_single(json_path: Path, output_path: Path = None, title: str = None):
 
     plt.tight_layout()
 
-    # Add model name below the plots 
+    # Add model name below the plots
     fig.text(
         0.5, 0.01, f"Model: {model_name}", ha="center", fontsize=9, style="italic", color="#555555"
     )
@@ -240,7 +240,7 @@ def plot_comparison(
     # Create figure with academic style
     fig, ax = plt.subplots(figsize=(8, 5))
 
-    # Plot lines 
+    # Plot lines
     ax.plot(
         eps1,
         rates1,
@@ -319,9 +319,7 @@ Examples:
     )
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument(
-        "--single", type=str, metavar="JSON", help="Single JSON result files"
-    )
+    group.add_argument("--single", type=str, metavar="JSON", help="Single JSON result files")
     group.add_argument(
         "--compare",
         type=str,

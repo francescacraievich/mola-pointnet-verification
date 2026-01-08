@@ -82,7 +82,7 @@ torch_model = PointNet(
     max_features=MAX_FEATURES,
     pool_function="improved_max",
     disable_assertions=True,
-    transposed_input=True,  
+    transposed_input=True,
 )
 torch_model.load_state_dict(checkpoint["model_state_dict"])
 torch_model = torch_model.eval()
@@ -93,7 +93,7 @@ onnx_model = onnx_converter.convert(torch_model, NUM_POINTS, ONNX_PATH)
 print(f"  ONNX exported to {ONNX_PATH}")
 print()
 
-# Initialize ERAN with Python API 
+# Initialize ERAN with Python API
 print("Initializing ERAN via Python API...")
 
 
