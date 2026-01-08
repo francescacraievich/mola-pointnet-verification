@@ -108,7 +108,7 @@ For every correctly classified point cloud region x₀:
 | 0.01 | 98 | 2 | 0 | 100 | **98%** |
 | 0.02 | 97 | 3 | 0 | 100 | **97%** |
 
-**Note**: Both verifiers use 512 max features for computational tractability. α,β-CROWN achieves higher verification rates due to its complete verification approach, maintaining >95% robustness even at ε=0.02 where ERAN drops to 2%.
+**Note**: Results are not directly comparable due to different architectures. ERAN uses MaxPool which causes loose bounds in abstract interpretation, while α,β-CROWN uses MeanPool allowing tighter bound propagation. The large gap at ε=0.02 (2% vs 97%) is mainly due to this architectural difference, not verifier quality.
 
 ## Installation
 

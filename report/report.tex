@@ -175,7 +175,7 @@ $\varepsilon$ (m) & Verified & Unsafe & Timeout & Rate \\
 \end{tabular}
 \end{table}
 
-$\alpha,\beta$-CROWN achieves very high verification rates across all tested $\varepsilon$ values, demonstrating the power of complete verification. The complete verifier can either prove robustness or find concrete counterexamples, resulting in minimal ``unknown'' outcomes.
+$\alpha,\beta$-CROWN achieves very high verification rates across all tested $\varepsilon$ values. However, the large gap compared to ERAN (e.g., 97\% vs 2\% at $\varepsilon=0.02$) is primarily due to architectural differences: MeanPool allows much tighter bound propagation than MaxPool, not just the complete vs incomplete verification approach.
 
 \subsection{Verification Plots}
 
